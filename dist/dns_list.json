@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Google",
+    "ip": "8.8.8.8",
+    "protocol": "UDP"
+  },
+  {
+    "name": "Cloudflare",
+    "ip": "1.1.1.1",
+    "protocol": "UDP"
+  },
+  {
+    "name": "شکن",
+    "ip": "178.x.x.x",
+    "protocol": "UDP"
+  },
+  {
+    "name": "رادار",
+    "ip": "185.x.x.x",
+    "protocol": "UDP"
+  }
+]
