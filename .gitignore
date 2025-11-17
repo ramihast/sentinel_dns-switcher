@@ -1,0 +1,17 @@
+# Ignore everything by default
+*
+
+# Except main.py
+!main.py
+
+# Ignore folders commonly created by Python or build tools
+__pycache__/
+build/
+dist/
+*.spec
+*.json
+*.manifest
+assets/
+
+# Optional: Ignore system files
+.DS_Store
