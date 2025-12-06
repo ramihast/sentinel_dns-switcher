@@ -390,7 +390,6 @@ class DNSGameOptimizer:
                       fg_color="#f59e0b", hover_color="#d97706",
                       text_color="white", font=self.font_normal,
                       width=140, command=self.restart_network).pack(side="left", padx=10)
-
     # ---------------- تب DNS ----------------
     def build_dns_tab(self):
         self.dns_frame = ctk.CTkScrollableFrame(self.frame_dns, fg_color=self.dark)
@@ -458,7 +457,6 @@ class DNSGameOptimizer:
                     col = 0
 
             grid.grid_columnconfigure((0, 1, 2, 3), weight=1)
-
     # ---------------- مدیریت DNS سفارشی ----------------
     def open_add_dns_window(self):
         w = ctk.CTkToplevel(self.root)
