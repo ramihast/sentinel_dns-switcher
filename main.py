@@ -1,7 +1,7 @@
 import customtkinter as ctk
 from tkinter import messagebox
 import subprocess, os, sys, json, re, ctypes, threading
-import ipaddress   # ← برای ولیدیت IP ها
+import ipaddress  # ← برای ولیدیت IP ها
 
 
 # --------------------------
@@ -29,7 +29,6 @@ font_path = os.path.join(base_path, "assets", "Dana-Regular.ttf")
 icon_path = os.path.join(base_path, "assets", "icon.ico")
 DNS_FILE = os.path.join(base_path, "dns_list.json")
 GAMES_FILE = os.path.join(base_path, "games_list.json")
-
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("green")
@@ -133,9 +132,6 @@ DEFAULT_GAMES = {
 # توابع امنیت IP
 # --------------------------
 def is_valid_ip(ip: str) -> bool:
-    """
-    بررسی فرمت IPv4/IPv6 با استفاده از ماژول استاندارد ipaddress
-    """
     ip = ip.strip()
     if not ip:
         return False
@@ -147,9 +143,6 @@ def is_valid_ip(ip: str) -> bool:
 
 
 def clean_dns_dict(d: dict) -> dict:
-    """
-    هر DNS که IP نامعتبر دارد حذف می‌شود تا فایل خراب برنامه را کرش نکند.
-    """
     cleaned = {}
     for name, ips in d.items():
         valid_ips = [ip for ip in ips if is_valid_ip(ip)]
@@ -171,7 +164,6 @@ def load_json_safe(path, default):
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        # پاک‌سازی IP های خراب در فایل‌های قبلی
         if isinstance(data, dict):
             for cat, servers in list(data.items()):
                 if isinstance(servers, dict):
@@ -201,6 +193,55 @@ def ping_latency(ip, timeout_ms=2000):
         return int(m.group(1)) if m else float("inf")
     except Exception:
         return float("inf")
+
+
+# ### تغییرات جدید: تابع پینگ چندگانه با پکت‌لاس و جیتر
+def ping_stats(ip, count=10, timeout_ms=2000):
+    """
+    چندین پینگ می‌گیرد و:
+    - avg_ping (ms)
+    - packet_loss (%)
+    - jitter (ms)
+    را برمی‌گرداند.
+    """
+    rtts = []
+    lost = 0
+
+    for _ in range(count):
+        try:
+            af_switch = "-6" if ":" in ip else "-4"
+            args = ["ping", af_switch, "-n", "1", "-w", str(timeout_ms), ip]
+            r = subprocess.run(args, capture_output=True, text=True,
+                               encoding="utf-8", errors="ignore")
+            s = r.stdout
+            if r.returncode != 0 or "TTL=" not in s.upper():
+                lost += 1
+            else:
+                if re.search(r"<\s*1\s*ms", s, flags=re.IGNORECASE):
+                    rtts.append(1.0)
+                else:
+                    m = re.search(r"(\d+)\s*ms", s, flags=re.IGNORECASE)
+                    if m:
+                        rtts.append(float(m.group(1)))
+                    else:
+                        lost += 1
+        except Exception:
+            lost += 1
+
+    total = count
+    if not rtts:
+        return float("inf"), float("inf"), float("inf")
+
+    avg_ping = sum(rtts) / len(rtts)
+    packet_loss = (lost / total) * 100.0
+
+    if len(rtts) >= 2:
+        diffs = [abs(rtts[i] - rtts[i-1]) for i in range(1, len(rtts))]
+        jitter = sum(diffs) / len(diffs)
+    else:
+        jitter = 0.0
+
+    return avg_ping, packet_loss, jitter
 
 
 # --------------------------
@@ -331,6 +372,12 @@ class DNSGameOptimizer:
                       fg_color=self.green, hover_color="#23985d",
                       text_color=self.darker, font=self.font_normal,
                       command=self.ping_all_dns).pack(side="left", padx=5, pady=6)
+
+        # ### تغییرات جدید: دکمه تست کامل
+        ctk.CTkButton(topbar, text=f"{RLM}📊 تست کامل", width=140,
+                      fg_color=self.blue, hover_color="#2563eb",
+                      text_color="white", font=self.font_normal,
+                      command=self.ping_all_advanced).pack(side="left", padx=5, pady=6)
 
         ctk.CTkButton(topbar, text=f"{RLM}👁️ DNS فعلی", width=170,
                       fg_color=self.green, hover_color="#23985d",
@@ -536,7 +583,6 @@ class DNSGameOptimizer:
             if not n or not i1:
                 return messagebox.showwarning("⚠️", "نام و IP اصلی الزامی است")
 
-            # چک امنیتی IP ها
             if not is_valid_ip(i1):
                 return messagebox.showerror("خطا", "IP اصلی نامعتبر است (فرمت IPv4/IPv6 صحیح نیست)")
             if i2 and not is_valid_ip(i2):
@@ -596,7 +642,6 @@ class DNSGameOptimizer:
             if not new_name or not i1:
                 return messagebox.showwarning("⚠️", "نام و IP اصلی الزامی است")
 
-            # چک امنیتی IP ها
             if not is_valid_ip(i1):
                 return messagebox.showerror("خطا", "IP اصلی نامعتبر است (فرمت IPv4/IPv6 صحیح نیست)")
             if i2 and not is_valid_ip(i2):
@@ -645,7 +690,6 @@ class DNSGameOptimizer:
         if "(هیچ" in interface or "(در حال" in interface:
             return messagebox.showwarning("⚠️", "لطفاً کارت شبکه مناسب انتخاب کنید")
 
-        # چک امنیتی: همه IP ها باید معتبر باشند
         checked_ips = [ip.strip() for ip in ips if ip.strip()]
         if not checked_ips or not all(is_valid_ip(ip) for ip in checked_ips):
             return messagebox.showerror("خطا", "IP های این DNS نامعتبر هستند؛ لطفاً ویرایش کنید.")
@@ -703,6 +747,66 @@ class DNSGameOptimizer:
         self.show_text_window("نتایج پینگ", "📊 نتایج پینگ DNS ها",
                               f"{len(results)} سرور تست شد", text, 640, 430)
 
+    # ### تغییرات جدید: پینگ پیشرفته همه DNS ها
+    def ping_all_advanced(self):
+        all_ips = [(n, i[0]) for c in self.dns_data.values() for n, i in c.items()]
+        if not all_ips:
+            return messagebox.showinfo("تست کامل", "هیچ DNS ای موجود نیست")
+        threading.Thread(target=self._ping_all_advanced_thread,
+                         args=(all_ips,), daemon=True).start()
+
+    def _ping_all_advanced_thread(self, dns_list):
+        results = []
+        total = len(dns_list)
+
+        for idx, (name, ip) in enumerate(dns_list, start=1):
+            self.root.after(0, lambda i=idx, n=name:
+                            self.status.configure(text=f"{RLM}تست کامل {i}/{total}: {n}",
+                                                  text_color=self.green))
+
+            avg_ping, packet_loss, jitter = ping_stats(ip, count=10)
+
+            # نمره ترکیبی (هرچه کمتر بهتر)
+            # ضرایب را می‌توانی بر اساس سلیقه تغییر بدهی
+            score = avg_ping * 0.6 + jitter * 0.3 + packet_loss * 1.0
+
+            results.append({
+                "name": name,
+                "ip": ip,
+                "avg_ping": avg_ping,
+                "packet_loss": packet_loss,
+                "jitter": jitter,
+                "score": score
+            })
+
+        results.sort(key=lambda x: x["score"])
+        self.root.after(0, lambda: self.show_advanced_results(results))
+
+    def show_advanced_results(self, results):
+        lines = []
+        for idx, r in enumerate(results, start=1):
+            ap = "∞" if r["avg_ping"] == float("inf") else f"{r['avg_ping']:.1f} ms"
+            jl = "∞" if r["jitter"] == float("inf") else f"{r['jitter']:.1f} ms"
+            pl = "∞" if r["packet_loss"] == float("inf") else f"{r['packet_loss']:.1f} %"
+            sc = "∞" if r["score"] == float("inf") else f"{r['score']:.1f}"
+
+            lines.append(
+                f"{idx}. {r['name']} ({r['ip']})\n"
+                f"   پینگ: {ap} | جیتر: {jl} | پکت‌لاس: {pl} | نمره: {sc}"
+            )
+
+        text = "\n\n".join(lines)
+
+        self.status.configure(text=f"{RLM}✅ تست کامل DNSها تمام شد", text_color=self.green)
+        self.show_text_window(
+            "تست کامل DNS",
+            "📊 رده‌بندی DNS ها",
+            f"{len(results)} سرور تست شد (پینگ، جیتر، پکت‌لاس و نمره ترکیبی)",
+            text,
+            760,
+            520
+        )
+
     # ---------------- تب بازی‌ها ----------------
     def build_games_tab(self):
         self.games_frame = ctk.CTkScrollableFrame(self.frame_games, fg_color=self.dark)
@@ -737,7 +841,6 @@ class DNSGameOptimizer:
         dns_list = self.games_data.get(game, {})
         best, best_lat = None, float("inf")
         for name, ips in dns_list.items():
-            # فقط IP های معتبر در نظر گرفته شوند
             if not ips or not is_valid_ip(ips[0]):
                 continue
             lat = ping_latency(ips[0])
