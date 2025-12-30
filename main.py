@@ -11,6 +11,7 @@ def is_admin():
     except:
         return False
 
+
 def run_as_admin():
     if not is_admin():
         params = " ".join([f'"{arg}"' for arg in sys.argv])
@@ -18,6 +19,7 @@ def run_as_admin():
             None, "runas", sys.executable, params, None, 1
         )
         sys.exit(0)
+
 
 run_as_admin()
 
@@ -112,7 +114,7 @@ TXT = {
     "msg_delete": "حذف",
     "no_interface": "(هیچ کارت شبکه‌ای یافت نشد)",
     "loading_interface": "(در حال بارگذاری...)",
-    "btn_set": "اعمال",
+    "btn_set": "اتصال",
     "btn_ping": "پینگ",
     "cat_local": "ایرانی",
     "cat_global": "جهانی",
@@ -145,21 +147,28 @@ DEFAULT_DNS = {
         "Comodo": ["8.26.56.26", "8.20.247.20"],
         "Neustar": ["156.154.70.5", "156.154.71.5"],
     },
-    "custom": {}
+    "custom": {},
 }
 
 DEFAULT_GAMES = {
     "Fortnite": {"Cloudflare": ["1.1.1.1", "1.0.0.1"], "Google": ["8.8.8.8", "8.8.4.4"]},
     "Valorant": {"Google": ["8.8.8.8", "8.8.4.4"], "Cloudflare": ["1.1.1.1", "1.0.0.1"]},
     "CS2": {"Cloudflare": ["1.1.1.1", "1.0.0.1"], "Quad9": ["9.9.9.9", "149.112.112.112"]},
-    "LeagueOfLegends": {"Google": ["8.8.8.8", "8.8.4.4"], "OpenDNS": ["208.67.222.222", "208.67.220.220"]},
+    "LeagueOfLegends": {
+        "Google": ["8.8.8.8", "8.8.4.4"],
+        "OpenDNS": ["208.67.222.222", "208.67.220.220"],
+    },
     "Dota2": {"Cloudflare": ["1.1.1.1", "1.0.0.1"], "AdGuard": ["94.140.14.14", "94.140.15.15"]},
     "PUBG": {"Google": ["8.8.8.8", "8.8.4.4"], "Quad9": ["9.9.9.9", "149.112.112.112"]},
     "ApexLegends": {"Cloudflare": ["1.1.1.1", "1.0.0.1"], "Google": ["8.8.8.8", "8.8.4.4"]},
     "Warzone": {"Quad9": ["9.9.9.9", "149.112.112.112"], "Cloudflare": ["1.1.1.1", "1.0.0.1"]},
     "Overwatch2": {"Google": ["8.8.8.8", "8.8.4.4"], "Cloudflare": ["1.1.1.1", "1.0.0.1"]},
-    "RocketLeague": {"Cloudflare": ["1.1.1.1", "1.0.0.1"], "Google": ["8.8.8.8", "8.8.4.4"]},
+    "RocketLeague": {
+        "Cloudflare": ["1.1.1.1", "1.0.0.1"],
+        "Google": ["8.8.8.8", "8.8.4.4"],
+    },
 }
+
 
 def is_valid_ip(ip: str) -> bool:
     ip = ip.strip()
@@ -171,6 +180,7 @@ def is_valid_ip(ip: str) -> bool:
     except ValueError:
         return False
 
+
 def clean_dns_dict(d: dict) -> dict:
     cleaned = {}
     for name, ips in d.items():
@@ -178,6 +188,7 @@ def clean_dns_dict(d: dict) -> dict:
         if valid_ips:
             cleaned[name] = valid_ips
     return cleaned
+
 
 def load_json_safe(path, default):
     try:
@@ -195,16 +206,19 @@ def load_json_safe(path, default):
     except:
         return default
 
+
 def save_json_safe(path, data):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
+
 
 def ping_latency(ip, timeout_ms=1000):
     try:
         af_switch = "-6" if ":" in ip else "-4"
         args = ["ping", af_switch, "-n", "1", "-w", str(timeout_ms), ip]
-        r = subprocess.run(args, capture_output=True, text=True,
-                           encoding="utf-8", errors="ignore")
+        r = subprocess.run(
+            args, capture_output=True, text=True, encoding="utf-8", errors="ignore"
+        )
         if r.returncode != 0 and "TTL=" not in r.stdout.upper():
             return float("inf")
         s = r.stdout
@@ -215,14 +229,16 @@ def ping_latency(ip, timeout_ms=1000):
     except Exception:
         return float("inf")
 
+
 def ping_stats(ip, count=5, timeout_ms=1000):
     rtts, lost = [], 0
     for _ in range(count):
         try:
             af_switch = "-6" if ":" in ip else "-4"
             args = ["ping", af_switch, "-n", "1", "-w", str(timeout_ms), ip]
-            r = subprocess.run(args, capture_output=True, text=True,
-                               encoding="utf-8", errors="ignore")
+            r = subprocess.run(
+                args, capture_output=True, text=True, encoding="utf-8", errors="ignore"
+            )
             s = r.stdout
             if r.returncode != 0 or "TTL=" not in s.upper():
                 lost += 1
@@ -243,11 +259,12 @@ def ping_stats(ip, count=5, timeout_ms=1000):
     avg_ping = sum(rtts) / len(rtts)
     packet_loss = (lost / total) * 100.0
     if len(rtts) >= 2:
-        diffs = [abs(rtts[i] - rtts[i-1]) for i in range(1, len(rtts))]
+        diffs = [abs(rtts[i] - rtts[i - 1]) for i in range(1, len(rtts))]
         jitter = sum(diffs) / len(diffs)
     else:
         jitter = 0.0
     return avg_ping, packet_loss, jitter
+
 
 def score_dns(avg_ping, jitter, packet_loss):
     if avg_ping == float("inf"):
@@ -258,6 +275,7 @@ def score_dns(avg_ping, jitter, packet_loss):
     penalty = ping_term + jitter_term + loss_term
     score = 100.0 - penalty
     return max(0.0, min(100.0, score))
+
 
 class DNSGameOptimizer:
     def __init__(self):
@@ -288,7 +306,9 @@ class DNSGameOptimizer:
         self.games_data = load_json_safe(GAMES_FILE, DEFAULT_GAMES)
 
         self.interface_names = []
-        self.selected_interface = ctk.StringVar(value=f"{RLM}{TXT['loading_interface']}")
+        self.selected_interface = ctk.StringVar(
+            value=f"{RLM}{TXT['loading_interface']}"
+        )
         self.protocol_mode = ctk.StringVar(value="IPv4")
 
         self.full_test_cancel = False
@@ -301,7 +321,7 @@ class DNSGameOptimizer:
         self.setup_ui()
         self.update_interface_list()
 
-    # ---------- کمک: آیکون برای همه پنجره‌ها ----------
+    # ---------- کمک: آیکون ----------
     def set_window_icon(self, win):
         if os.path.exists(icon_path):
             try:
@@ -315,8 +335,11 @@ class DNSGameOptimizer:
         try:
             r = subprocess.run(
                 "netsh interface show interface",
-                shell=True, capture_output=True, text=True,
-                encoding="utf-8", errors="ignore"
+                shell=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="ignore",
             )
             lines = r.stdout.splitlines()
             active_interfaces, all_interfaces = [], []
@@ -335,7 +358,9 @@ class DNSGameOptimizer:
                     all_interfaces.append((name, state))
                     if "Connected" in line:
                         active_interfaces.append((name, state))
-            interfaces = active_interfaces + [i for i in all_interfaces if i not in active_interfaces]
+            interfaces = active_interfaces + [
+                i for i in all_interfaces if i not in active_interfaces
+            ]
         except Exception:
             pass
         if not interfaces:
@@ -369,7 +394,7 @@ class DNSGameOptimizer:
             text=f"{RLM}{net} | {proto}",
             text_color=self.green,
             anchor="center",
-            justify="center"
+            justify="center",
         )
 
     def on_interface_change(self, selection):
@@ -386,7 +411,7 @@ class DNSGameOptimizer:
             text=f"{RLM}{TXT['btn_refresh']}",
             text_color=self.green,
             anchor="center",
-            justify="center"
+            justify="center",
         )
 
     # ---------- UI اصلی ----------
@@ -404,7 +429,7 @@ class DNSGameOptimizer:
             text_color=self.green,
             font=self.font_title,
             anchor="center",
-            justify="center"
+            justify="center",
         ).pack(pady=(4, 2))
         ctk.CTkLabel(
             title,
@@ -412,7 +437,7 @@ class DNSGameOptimizer:
             text_color="#bfbfbf",
             font=self.font_normal,
             anchor="center",
-            justify="center"
+            justify="center",
         ).pack(pady=(0, 6))
 
         topbar = ctk.CTkFrame(main, fg_color=self.darker)
@@ -426,56 +451,80 @@ class DNSGameOptimizer:
         top_btn_height = 32
 
         self.btn_tab_dns = ctk.CTkButton(
-            btn_row, text=f"{RLM}{TXT['tab_dns']}",
-            width=top_btn_width, height=top_btn_height,
-            fg_color=self.green, hover_color="#23985d",
-            text_color=self.darker, font=self.font_normal,
-            command=lambda: self.on_top_tab_change("dns")
+            btn_row,
+            text=f"{RLM}{TXT['tab_dns']}",
+            width=top_btn_width,
+            height=top_btn_height,
+            fg_color=self.green,
+            hover_color="#23985d",
+            text_color=self.darker,
+            font=self.font_normal,
+            command=lambda: self.on_top_tab_change("dns"),
         )
         self.btn_tab_dns.pack(side="left", padx=4, pady=8)
 
         self.btn_tab_games = ctk.CTkButton(
-            btn_row, text=f"{RLM}{TXT['tab_games']}",
-            width=top_btn_width, height=top_btn_height,
-            fg_color="#111111", hover_color="#374151",
-            text_color="white", font=self.font_normal,
-            command=lambda: self.on_top_tab_change("games")
+            btn_row,
+            text=f"{RLM}{TXT['tab_games']}",
+            width=top_btn_width,
+            height=top_btn_height,
+            fg_color="#111111",
+            hover_color="#374151",
+            text_color="white",
+            font=self.font_normal,
+            command=lambda: self.on_top_tab_change("games"),
         )
         self.btn_tab_games.pack(side="left", padx=4, pady=8)
 
         self.btn_add_dns = ctk.CTkButton(
-            btn_row, text=f"{RLM}{TXT['btn_add_dns']}",
-            width=top_btn_width, height=top_btn_height,
-            fg_color=self.green, hover_color="#23985d",
-            text_color=self.darker, font=self.font_normal,
-            command=self.open_add_dns_window
+            btn_row,
+            text=f"{RLM}{TXT['btn_add_dns']}",
+            width=top_btn_width,
+            height=top_btn_height,
+            fg_color=self.green,
+            hover_color="#23985d",
+            text_color=self.darker,
+            font=self.font_normal,
+            command=self.open_add_dns_window,
         )
         self.btn_add_dns.pack(side="left", padx=4, pady=8)
 
         self.btn_current_dns = ctk.CTkButton(
-            btn_row, text=f"{RLM}{TXT['btn_current_dns']}",
-            width=top_btn_width, height=top_btn_height,
-            fg_color=self.green, hover_color="#23985d",
-            text_color=self.darker, font=self.font_normal,
-            command=self.show_current_dns
+            btn_row,
+            text=f"{RLM}{TXT['btn_current_dns']}",
+            width=top_btn_width,
+            height=top_btn_height,
+            fg_color=self.green,
+            hover_color="#23985d",
+            text_color=self.darker,
+            font=self.font_normal,
+            command=self.show_current_dns,
         )
         self.btn_current_dns.pack(side="left", padx=4, pady=8)
 
         self.btn_ping_all = ctk.CTkButton(
-            btn_row, text=f"{RLM}{TXT['btn_ping_all']}",
-            width=top_btn_width, height=top_btn_height,
-            fg_color=self.green, hover_color="#23985d",
-            text_color=self.darker, font=self.font_normal,
-            command=self.ping_all_dns
+            btn_row,
+            text=f"{RLM}{TXT['btn_ping_all']}",
+            width=top_btn_width,
+            height=top_btn_height,
+            fg_color=self.green,
+            hover_color="#23985d",
+            text_color=self.darker,
+            font=self.font_normal,
+            command=self.ping_all_dns,
         )
         self.btn_ping_all.pack(side="left", padx=4, pady=8)
 
         self.btn_ping_full = ctk.CTkButton(
-            btn_row, text=f"{RLM}{TXT['btn_ping_full']}",
-            width=top_btn_width, height=top_btn_height,
-            fg_color=self.blue, hover_color="#2563eb",
-            text_color="white", font=self.font_normal,
-            command=self.open_full_test_window
+            btn_row,
+            text=f"{RLM}{TXT['btn_ping_full']}",
+            width=top_btn_width,
+            height=top_btn_height,
+            fg_color=self.blue,
+            hover_color="#2563eb",
+            text_color="white",
+            font=self.font_normal,
+            command=self.open_full_test_window,
         )
         self.btn_ping_full.pack(side="left", padx=4, pady=8)
 
@@ -502,29 +551,41 @@ class DNSGameOptimizer:
             cats_row.grid_columnconfigure(c, weight=1)
 
         self.btn_cat_local = ctk.CTkButton(
-            cats_row, text=f"{RLM}{TXT['cat_local']}",
-            fg_color=self.green, hover_color="#16a34a",
-            text_color="black", font=self.font_header,
-            height=30, corner_radius=8,
-            command=lambda: self.set_dns_category("local")
+            cats_row,
+            text=f"{RLM}{TXT['cat_local']}",
+            fg_color=self.green,
+            hover_color="#16a34a",
+            text_color="black",
+            font=self.font_header,
+            height=30,
+            corner_radius=8,
+            command=lambda: self.set_dns_category("local"),
         )
         self.btn_cat_local.grid(row=0, column=0, padx=4, sticky="ew")
 
         self.btn_cat_global = ctk.CTkButton(
-            cats_row, text=f"{RLM}{TXT['cat_global']}",
-            fg_color="#1f2933", hover_color="#374151",
-            text_color="white", font=self.font_header,
-            height=30, corner_radius=8,
-            command=lambda: self.set_dns_category("global")
+            cats_row,
+            text=f"{RLM}{TXT['cat_global']}",
+            fg_color="#1f2933",
+            hover_color="#374151",
+            text_color="white",
+            font=self.font_header,
+            height=30,
+            corner_radius=8,
+            command=lambda: self.set_dns_category("global"),
         )
         self.btn_cat_global.grid(row=0, column=1, padx=4, sticky="ew")
 
         self.btn_cat_custom = ctk.CTkButton(
-            cats_row, text=f"{RLM}{TXT['cat_custom']}",
-            fg_color="#1f2933", hover_color="#374151",
-            text_color="white", font=self.font_header,
-            height=30, corner_radius=8,
-            command=lambda: self.set_dns_category("custom")
+            cats_row,
+            text=f"{RLM}{TXT['cat_custom']}",
+            fg_color="#1f2933",
+            hover_color="#374151",
+            text_color="white",
+            font=self.font_header,
+            height=30,
+            corner_radius=8,
+            command=lambda: self.set_dns_category("custom"),
         )
         self.btn_cat_custom.grid(row=0, column=2, padx=4, sticky="ew")
 
@@ -532,10 +593,12 @@ class DNSGameOptimizer:
         self.dns_list_frame.grid(row=1, column=0, sticky="nsew", pady=(4, 0))
 
         # تب بازی‌ها
-        self.frame_games = ctk.CTkScrollableFrame(self.tab_games_root, fg_color=self.dark)
+        self.frame_games = ctk.CTkScrollableFrame(
+            self.tab_games_root, fg_color=self.dark
+        )
         self.frame_games.pack(fill="both", expand=True, padx=10, pady=6)
 
-        # نوار پایینی
+        # نوار پایین
         self.bottom_settings = self.build_bottom_settings()
         self.bottom_settings.grid(row=1, column=0, sticky="ew", padx=10, pady=(0, 4))
 
@@ -551,7 +614,7 @@ class DNSGameOptimizer:
             font=self.font_normal,
             text_color=self.green,
             fg_color=self.darker,
-            height=24
+            height=24,
         )
         self.status.grid(row=2, column=0, sticky="ew", pady=(0, 2))
 
@@ -570,32 +633,41 @@ class DNSGameOptimizer:
         toolscard.grid_columnconfigure(0, weight=1)
 
         self.toolslabel = ctk.CTkLabel(
-            toolscard, text=f"{RLM}{TXT['tools_title']}",
-            font=self.font_header, text_color=self.green,
-            anchor="center", justify="center"
+            toolscard,
+            text=f"{RLM}{TXT['tools_title']}",
+            font=self.font_header,
+            text_color=self.green,
+            anchor="center",
+            justify="center",
         )
-        self.toolslabel.grid(row=0, column=0, sticky="ew",
-                             padx=10, pady=(10, 4))
+        self.toolslabel.grid(row=0, column=0, sticky="ew", padx=10, pady=(10, 4))
 
         btnframe = ctk.CTkFrame(toolscard, fg_color="transparent")
-        btnframe.grid(row=1, column=0, sticky="ew",
-                      pady=(6, 10), padx=10)
+        btnframe.grid(row=1, column=0, sticky="ew", pady=(6, 10), padx=10)
         btnframe.grid_columnconfigure(0, weight=1)
         btnframe.grid_columnconfigure(1, weight=1)
 
         self.btn_flush = ctk.CTkButton(
-            btnframe, text=f"{RLM}{TXT['btn_flush_dns']}",
-            fg_color="#3fb881", hover_color="#2fa668",
-            text_color=self.darker, font=self.font_normal,
-            height=32, command=self.flush_dns
+            btnframe,
+            text=f"{RLM}{TXT['btn_flush_dns']}",
+            fg_color="#3fb881",
+            hover_color="#2fa668",
+            text_color=self.darker,
+            font=self.font_normal,
+            height=32,
+            command=self.flush_dns,
         )
         self.btn_flush.grid(row=0, column=0, sticky="ew", padx=4, pady=4)
 
         self.btn_reset_net = ctk.CTkButton(
-            btnframe, text=f"{RLM}{TXT['btn_reset_net']}",
-            fg_color="#f59e0b", hover_color="#d97706",
-            text_color="white", font=self.font_normal,
-            height=32, command=self.restart_network
+            btnframe,
+            text=f"{RLM}{TXT['btn_reset_net']}",
+            fg_color="#f59e0b",
+            hover_color="#d97706",
+            text_color="white",
+            font=self.font_normal,
+            height=32,
+            command=self.restart_network,
         )
         self.btn_reset_net.grid(row=0, column=1, sticky="ew", padx=4, pady=4)
 
@@ -606,26 +678,31 @@ class DNSGameOptimizer:
         protocard.grid_columnconfigure(0, weight=1)
 
         self.protolabel = ctk.CTkLabel(
-            protocard, text=f"{RLM}{TXT['proto_title']}",
-            font=self.font_header, text_color=self.green,
-            anchor="center", justify="center"
+            protocard,
+            text=f"{RLM}{TXT['proto_title']}",
+            font=self.font_header,
+            text_color=self.green,
+            anchor="center",
+            justify="center",
         )
-        self.protolabel.grid(row=0, column=0, sticky="ew",
-                             padx=10, pady=(10, 4))
+        self.protolabel.grid(row=0, column=0, sticky="ew", padx=10, pady=(10, 4))
 
         self.protocol_menu = ctk.CTkOptionMenu(
-            protocard, variable=self.protocol_mode,
+            protocard,
+            variable=self.protocol_mode,
             values=["IPv4", "IPv6"],
-            fg_color=self.darker, button_color=self.green,
+            fg_color=self.darker,
+            button_color=self.green,
             button_hover_color="#23985d",
-            text_color="white", font=self.font_normal,
-            width=140, height=32,
-            command=self.on_protocol_change
+            text_color="white",
+            font=self.font_normal,
+            width=140,
+            height=32,
+            command=self.on_protocol_change,
         )
-        self.protocol_menu.grid(row=1, column=0, sticky="ew",
-                                padx=10, pady=(0, 10))
+        self.protocol_menu.grid(row=1, column=0, sticky="ew", padx=10, pady=(0, 10))
 
-        # کارت شبکه فعال
+        # کارت شبکه
         netcard = ctk.CTkFrame(frame, fg_color=self.card, corner_radius=12)
         netcard.grid(row=0, column=2, sticky="nsew", padx=4, pady=4)
         netcard.grid_rowconfigure(1, weight=1)
@@ -633,33 +710,46 @@ class DNSGameOptimizer:
         netcard.grid_columnconfigure(1, weight=1)
 
         self.netlabel = ctk.CTkLabel(
-            netcard, text=f"{RLM}{TXT['netcard_title']}",
-            font=self.font_header, text_color=self.green,
-            anchor="center", justify="center"
+            netcard,
+            text=f"{RLM}{TXT['netcard_title']}",
+            font=self.font_header,
+            text_color=self.green,
+            anchor="center",
+            justify="center",
         )
-        self.netlabel.grid(row=0, column=0, columnspan=2, sticky="ew",
-                           padx=10, pady=(10, 4))
+        self.netlabel.grid(
+            row=0, column=0, columnspan=2, sticky="ew", padx=10, pady=(10, 4)
+        )
 
         self.btn_refresh_if = ctk.CTkButton(
-            netcard, text=f"{RLM}{TXT['btn_refresh']}",
-            fg_color=self.blue, hover_color="#2563eb",
-            text_color="white", font=self.font_normal,
-            height=32, command=self.refresh_interfaces
+            netcard,
+            text=f"{RLM}{TXT['btn_refresh']}",
+            fg_color=self.blue,
+            hover_color="#2563eb",
+            text_color="white",
+            font=self.font_normal,
+            height=32,
+            command=self.refresh_interfaces,
         )
-        self.btn_refresh_if.grid(row=1, column=0, sticky="ew",
-                                 padx=(10, 4), pady=(0, 10))
+        self.btn_refresh_if.grid(
+            row=1, column=0, sticky="ew", padx=(10, 4), pady=(0, 10)
+        )
 
         self.interface_menu = ctk.CTkOptionMenu(
-            netcard, variable=self.selected_interface,
+            netcard,
+            variable=self.selected_interface,
             values=self.interface_names,
-            fg_color=self.darker, button_color=self.green,
+            fg_color=self.darker,
+            button_color=self.green,
             button_hover_color="#23985d",
-            text_color="white", font=self.font_normal,
+            text_color="white",
+            font=self.font_normal,
             height=32,
-            command=self.on_interface_change
+            command=self.on_interface_change,
         )
-        self.interface_menu.grid(row=1, column=1, sticky="ew",
-                                 padx=(4, 10), pady=(0, 10))
+        self.interface_menu.grid(
+            row=1, column=1, sticky="ew", padx=(4, 10), pady=(0, 10)
+        )
 
         return frame
 
@@ -708,36 +798,47 @@ class DNSGameOptimizer:
             card.grid(row=row, column=col, padx=4, pady=4, sticky="nsew")
 
             ctk.CTkLabel(
-                card, text=f"{RLM}{name}",
-                font=self.font_header, text_color=self.green,
-                anchor="center", justify="center"
+                card,
+                text=f"{RLM}{name}",
+                font=self.font_header,
+                text_color=self.green,
+                anchor="center",
+                justify="center",
             ).pack(pady=(4, 2), padx=4)
 
             ip_text = "\n".join(ips)
             ctk.CTkLabel(
-                card, text=ip_text,
+                card,
+                text=ip_text,
                 text_color="#cccccc",
                 font=ctk.CTkFont(family="Dana", size=11, weight="bold"),
-                anchor="center", justify="center"
+                anchor="center",
+                justify="center",
             ).pack(pady=(0, 4), padx=4)
 
             btn_frame = ctk.CTkFrame(card, fg_color="transparent")
             btn_frame.pack(pady=(0, 4))
 
             ctk.CTkButton(
-                btn_frame, text=f"{RLM}{TXT['btn_set']}",
-                width=60, fg_color=self.green,
-                hover_color="#23985d", text_color=self.darker,
+                btn_frame,
+                text=f"{RLM}{TXT['btn_set']}",
+                width=60,
+                fg_color=self.green,
+                hover_color="#23985d",
+                text_color=self.darker,
                 font=self.font_normal,
-                command=lambda n=name, i=ips: self.apply_dns(n, i)
+                command=lambda n=name, i=ips: self.apply_dns(n, i),
             ).pack(side="left", padx=2)
 
             ctk.CTkButton(
-                btn_frame, text=f"{RLM}{TXT['btn_ping']}",
-                width=60, fg_color="#555555",
-                hover_color="#444444", text_color=self.green,
+                btn_frame,
+                text=f"{RLM}{TXT['btn_ping']}",
+                width=60,
+                fg_color="#555555",
+                hover_color="#444444",
+                text_color=self.green,
                 font=self.font_normal,
-                command=lambda n=name, i=ips: self.ping_single(n, i)
+                command=lambda n=name, i=ips: self.ping_single(n, i),
             ).pack(side="left", padx=2)
 
             if self.current_dns_category == "custom":
@@ -745,19 +846,27 @@ class DNSGameOptimizer:
                 edit_frame.pack(pady=(0, 4))
 
                 ctk.CTkButton(
-                    edit_frame, text="ویرایش",
-                    fg_color=self.blue, hover_color="#2563eb",
-                    text_color="white", font=self.font_normal,
-                    width=70, height=26,
-                    command=lambda n=name: self.open_edit_dns_window("custom", n)
+                    edit_frame,
+                    text="ویرایش",
+                    fg_color=self.blue,
+                    hover_color="#2563eb",
+                    text_color="white",
+                    font=self.font_normal,
+                    width=70,
+                    height=26,
+                    command=lambda n=name: self.open_edit_dns_window("custom", n),
                 ).pack(side="left", padx=4)
 
                 ctk.CTkButton(
-                    edit_frame, text="حذف",
-                    fg_color="#ef4444", hover_color="#b91c1c",
-                    text_color="white", font=self.font_normal,
-                    width=70, height=26,
-                    command=lambda n=name: self.delete_dns("custom", n)
+                    edit_frame,
+                    text="حذف",
+                    fg_color="#ef4444",
+                    hover_color="#b91c1c",
+                    text_color="white",
+                    font=self.font_normal,
+                    width=70,
+                    height=26,
+                    command=lambda n=name: self.delete_dns("custom", n),
                 ).pack(side="left", padx=4)
 
             col += 1
@@ -786,7 +895,7 @@ class DNSGameOptimizer:
                 font=self.font_header,
                 text_color=self.green,
                 anchor="center",
-                justify="center"
+                justify="center",
             ).pack(pady=(8, 4), padx=8)
 
             ctk.CTkButton(
@@ -797,7 +906,7 @@ class DNSGameOptimizer:
                 hover_color="#23985d",
                 text_color=self.darker,
                 font=self.font_normal,
-                command=lambda g=game: self.open_game_dns_window(g)
+                command=lambda g=game: self.open_game_dns_window(g),
             ).pack(pady=(0, 10), padx=8)
 
             col += 1
@@ -815,27 +924,42 @@ class DNSGameOptimizer:
         w.configure(fg_color=self.dark)
 
         ctk.CTkLabel(
-            w, text=f"{RLM}{TXT['dns_name']}",
-            text_color=self.green, font=self.font_normal,
-            anchor="center", justify="center"
+            w,
+            text=f"{RLM}{TXT['dns_name']}",
+            text_color=self.green,
+            font=self.font_normal,
+            anchor="center",
+            justify="center",
         ).pack(pady=(16, 6))
-        name = ctk.CTkEntry(w, width=350, font=self.font_normal, height=32, justify="center")
+        name = ctk.CTkEntry(
+            w, width=350, font=self.font_normal, height=32, justify="center"
+        )
         name.pack(pady=4)
 
         ctk.CTkLabel(
-            w, text=f"{RLM}{TXT['dns_ip_main']}",
-            text_color=self.green, font=self.font_normal,
-            anchor="center", justify="center"
+            w,
+            text=f"{RLM}{TXT['dns_ip_main']}",
+            text_color=self.green,
+            font=self.font_normal,
+            anchor="center",
+            justify="center",
         ).pack(pady=(10, 6))
-        ip1 = ctk.CTkEntry(w, width=350, font=self.font_normal, height=32, justify="center")
+        ip1 = ctk.CTkEntry(
+            w, width=350, font=self.font_normal, height=32, justify="center"
+        )
         ip1.pack(pady=4)
 
         ctk.CTkLabel(
-            w, text=f"{RLM}{TXT['dns_ip_secondary']}",
-            text_color=self.green, font=self.font_normal,
-            anchor="center", justify="center"
+            w,
+            text=f"{RLM}{TXT['dns_ip_secondary']}",
+            text_color=self.green,
+            font=self.font_normal,
+            anchor="center",
+            justify="center",
         ).pack(pady=(10, 6))
-        ip2 = ctk.CTkEntry(w, width=350, font=self.font_normal, height=32, justify="center")
+        ip2 = ctk.CTkEntry(
+            w, width=350, font=self.font_normal, height=32, justify="center"
+        )
         ip2.pack(pady=(0, 16))
 
         def save():
@@ -855,7 +979,9 @@ class DNSGameOptimizer:
 
             self.dns_data.setdefault("custom", {})
             if n in self.dns_data["custom"]:
-                messagebox.showwarning(TXT["msg_warning"], TXT["warn_duplicate_name"])
+                messagebox.showwarning(
+                    TXT["msg_warning"], TXT["warn_duplicate_name"]
+                )
                 return
 
             ips_list = [i1]
@@ -868,14 +994,18 @@ class DNSGameOptimizer:
                 text=f"{RLM}{n} {TXT['status_dns_added']}",
                 text_color=self.green,
                 anchor="center",
-                justify="center"
+                justify="center",
             )
             w.destroy()
 
         ctk.CTkButton(
-            w, text=f"{RLM}{TXT['btn_save']}",
-            fg_color=self.green, width=200, height=36,
-            font=self.font_normal, command=save
+            w,
+            text=f"{RLM}{TXT['btn_save']}",
+            fg_color=self.green,
+            width=200,
+            height=36,
+            font=self.font_normal,
+            command=save,
         ).pack(pady=(0, 14))
 
     def open_edit_dns_window(self, category, dns_name):
@@ -892,30 +1022,45 @@ class DNSGameOptimizer:
         w.configure(fg_color=self.dark)
 
         ctk.CTkLabel(
-            w, text=f"{RLM}{TXT['dns_name']}",
-            text_color=self.green, font=self.font_normal,
-            anchor="center", justify="center"
+            w,
+            text=f"{RLM}{TXT['dns_name']}",
+            text_color=self.green,
+            font=self.font_normal,
+            anchor="center",
+            justify="center",
         ).pack(pady=(16, 6))
-        name_entry = ctk.CTkEntry(w, width=350, font=self.font_normal, height=32, justify="center")
+        name_entry = ctk.CTkEntry(
+            w, width=350, font=self.font_normal, height=32, justify="center"
+        )
         name_entry.pack(pady=4)
         name_entry.insert(0, dns_name)
 
         ctk.CTkLabel(
-            w, text=f"{RLM}{TXT['dns_ip_main']}",
-            text_color=self.green, font=self.font_normal,
-            anchor="center", justify="center"
+            w,
+            text=f"{RLM}{TXT['dns_ip_main']}",
+            text_color=self.green,
+            font=self.font_normal,
+            anchor="center",
+            justify="center",
         ).pack(pady=(10, 6))
-        ip1_entry = ctk.CTkEntry(w, width=350, font=self.font_normal, height=32, justify="center")
+        ip1_entry = ctk.CTkEntry(
+            w, width=350, font=self.font_normal, height=32, justify="center"
+        )
         ip1_entry.pack(pady=4)
         if len(current_ips) >= 1:
             ip1_entry.insert(0, current_ips[0])
 
         ctk.CTkLabel(
-            w, text=f"{RLM}{TXT['dns_ip_second']}",
-            text_color=self.green, font=self.font_normal,
-            anchor="center", justify="center"
+            w,
+            text=f"{RLM}{TXT['dns_ip_second']}",
+            text_color=self.green,
+            font=self.font_normal,
+            anchor="center",
+            justify="center",
         ).pack(pady=(10, 6))
-        ip2_entry = ctk.CTkEntry(w, width=350, font=self.font_normal, height=32, justify="center")
+        ip2_entry = ctk.CTkEntry(
+            w, width=350, font=self.font_normal, height=32, justify="center"
+        )
         ip2_entry.pack(pady=(0, 16))
         if len(current_ips) >= 2:
             ip2_entry.insert(0, current_ips[1])
@@ -937,7 +1082,9 @@ class DNSGameOptimizer:
 
             cat_dict = self.dns_data.setdefault(category, {})
             if new_name != dns_name and new_name in cat_dict:
-                messagebox.showwarning(TXT["msg_warning"], TXT["warn_duplicate_name"])
+                messagebox.showwarning(
+                    TXT["msg_warning"], TXT["warn_duplicate_name"]
+                )
                 return
 
             if new_name != dns_name:
@@ -953,14 +1100,18 @@ class DNSGameOptimizer:
                 text=f"{RLM}{new_name} {TXT['status_dns_edited']}",
                 text_color=self.green,
                 anchor="center",
-                justify="center"
+                justify="center",
             )
             w.destroy()
 
         ctk.CTkButton(
-            w, text=f"{RLM}{TXT['btn_save']}",
-            fg_color=self.green, width=200, height=36,
-            font=self.font_normal, command=save_edit
+            w,
+            text=f"{RLM}{TXT['btn_save']}",
+            fg_color=self.green,
+            width=200,
+            height=36,
+            font=self.font_normal,
+            command=save_edit,
         ).pack(pady=(0, 14))
 
     def delete_dns(self, category, dns_name):
@@ -968,8 +1119,7 @@ class DNSGameOptimizer:
             messagebox.showwarning(TXT["msg_warning"], TXT["delete_only_custom"])
             return
         if not messagebox.askyesno(
-            TXT["msg_delete"],
-            TXT["delete_confirm"].format(name=dns_name)
+            TXT["msg_delete"], TXT["delete_confirm"].format(name=dns_name)
         ):
             return
         try:
@@ -982,7 +1132,7 @@ class DNSGameOptimizer:
                     text=f"{RLM}{dns_name} {TXT['status_dns_deleted']}",
                     text_color="#ff5555",
                     anchor="center",
-                    justify="center"
+                    justify="center",
                 )
         except Exception as e:
             messagebox.showerror(TXT["msg_error"], str(e))
@@ -991,7 +1141,9 @@ class DNSGameOptimizer:
     def apply_dns(self, name, ips):
         interface = self.selected_interface.get()
         if TXT["no_interface"] in interface or TXT["loading_interface"] in interface:
-            messagebox.showwarning(TXT["msg_warning"], TXT["warn_select_interface"])
+            messagebox.showwarning(
+                TXT["msg_warning"], TXT["warn_select_interface"]
+            )
             return
 
         checked_ips = [ip.strip() for ip in ips if ip.strip()]
@@ -1000,30 +1152,69 @@ class DNSGameOptimizer:
             return
 
         proto = self.protocol_mode.get().lower()
-        try:
-            subprocess.run(
-                f'netsh interface {proto} delete dnsservers name="{interface}" all',
-                shell=True, check=True
-            )
-            subprocess.run(
-                f'netsh interface {proto} set dnsservers name="{interface}" static {checked_ips[0]} primary',
-                shell=True, check=True
-            )
-            if len(checked_ips) > 1:
+
+        def worker():
+            try:
+                # پاک‌کردن DNSهای قبلی
                 subprocess.run(
-                    f'netsh interface {proto} add dnsservers name="{interface}" {checked_ips[1]} index=2',
-                    shell=True, check=True
+                    f'netsh interface {proto} delete dnsservers name="{interface}" all',
+                    shell=True,
+                    check=True,
                 )
-            self.status.configure(
-                text=f"{RLM}{name} {TXT['status_dns_applied'].format(iface=interface)}",
-                text_color=self.green,
-                anchor="center",
-                justify="center"
-            )
-        except subprocess.CalledProcessError:
-            messagebox.showerror(TXT["msg_error"], TXT["err_set_dns"])
-        except Exception as e:
-            messagebox.showerror(TXT["msg_error"], str(e))
+
+                # ست DNS اصلی
+                if proto == "ipv4":
+                    cmd_primary = (
+                        f'netsh interface ipv4 add dnsserver '
+                        f'name="{interface}" address={checked_ips[0]} index=1'
+                    )
+                else:
+                    cmd_primary = (
+                        f'netsh interface ipv6 add dnsserver '
+                        f'name="{interface}" address={checked_ips[0]} index=1'
+                    )
+                subprocess.run(cmd_primary, shell=True, check=True)
+
+                # همین که اصلی ست شد، سریعاً استاتوس را آپدیت کن
+                self.root.after(
+                    0,
+                    lambda: self.status.configure(
+                        text=f"{RLM}{name} {TXT['status_dns_applied'].format(iface=interface)}",
+                        text_color=self.green,
+                        anchor="center",
+                        justify="center",
+                    ),
+                )
+
+                # ست DNS دوم در صورت وجود
+                if len(checked_ips) > 1:
+                    if proto == "ipv4":
+                        cmd_second = (
+                            f'netsh interface ipv4 add dnsserver '
+                            f'name="{interface}" address={checked_ips[1]} index=2'
+                        )
+                    else:
+                        cmd_second = (
+                            f'netsh interface ipv6 add dnsserver '
+                            f'name="{interface}" address={checked_ips[1]} index=2'
+                        )
+                    subprocess.run(cmd_second, shell=True, check=True)
+
+            except subprocess.CalledProcessError as e:
+                self.root.after(
+                    0,
+                    lambda: messagebox.showerror(
+                        TXT["msg_error"],
+                        TXT["err_set_dns"] + f"\n\n{e}",
+                    ),
+                )
+            except Exception as e:
+                self.root.after(
+                    0,
+                    lambda: messagebox.showerror(TXT["msg_error"], str(e)),
+                )
+
+        threading.Thread(target=worker, daemon=True).start()
 
     def ping_single(self, name, ips):
         def worker():
@@ -1031,7 +1222,7 @@ class DNSGameOptimizer:
                 text=f"{RLM}{TXT['status_ping_single'].format(name=name)}",
                 text_color=self.green,
                 anchor="center",
-                justify="center"
+                justify="center",
             )
             lat = ping_latency(ips[0])
             val = f"{lat} ms" if lat != float("inf") else "Timeout"
@@ -1039,8 +1230,9 @@ class DNSGameOptimizer:
                 text=f"{RLM}{TXT['status_ping_single_done'].format(name=name, lat=val)}",
                 text_color=self.green,
                 anchor="center",
-                justify="center"
+                justify="center",
             )
+
         threading.Thread(target=worker, daemon=True).start()
 
     def ping_all_dns(self):
@@ -1062,18 +1254,19 @@ class DNSGameOptimizer:
                     text=f"{RLM}{TXT['status_ping_all'].format(i=i, total=total, name=name)}",
                     text_color=self.green,
                     anchor="center",
-                    justify="center"
-                )
+                    justify="center",
+                ),
             )
             lat = ping_latency(ip)
             results.append((n, ip, lat))
 
-        # مرتب‌سازی بر اساس پینگ و شماره‌گذاری
         results_sorted = sorted(results, key=lambda x: x[2])
         lines = []
         for idx, (name, ip, lat) in enumerate(results_sorted, start=1):
             val = f"{lat} ms" if lat != float("inf") else "Timeout"
-            line = f"{idx}. " + TXT["ping_line"].format(name=name, ip=ip, val=val)
+            line = f"{idx}. " + TXT["ping_line"].format(
+                name=name, ip=ip, val=val
+            )
             lines.append(line)
         out_text = "\n".join(lines)
 
@@ -1082,7 +1275,8 @@ class DNSGameOptimizer:
             TXT["ping_results_header"],
             TXT["ping_results_sub"].format(count=len(results)),
             out_text,
-            480, 380
+            480,
+            380,
         )
         self.root.after(
             0,
@@ -1090,15 +1284,17 @@ class DNSGameOptimizer:
                 text=f"{RLM}{TXT['status_ready']}",
                 text_color=self.green,
                 anchor="center",
-                justify="center"
-            )
+                justify="center",
+            ),
         )
 
     # ---------- تست کامل ----------
     def open_full_test_window(self):
         all_ips = [(n, i[0]) for c in self.dns_data.values() for n, i in c.items()]
         if not all_ips:
-            messagebox.showinfo(TXT["full_test_title_info"], TXT["full_test_no_dns"])
+            messagebox.showinfo(
+                TXT["full_test_title_info"], TXT["full_test_no_dns"]
+            )
             return
 
         self.full_test_cancel = False
@@ -1113,15 +1309,20 @@ class DNSGameOptimizer:
         top = ctk.CTkFrame(win, fg_color=self.dark)
         top.pack(fill="x", padx=10, pady=(10, 0))
         ctk.CTkLabel(
-            top, text=f"{RLM}{TXT['full_test_header']}",
-            font=self.font_header, text_color=self.green,
-            anchor="center", justify="center"
+            top,
+            text=f"{RLM}{TXT['full_test_header']}",
+            font=self.font_header,
+            text_color=self.green,
+            anchor="center",
+            justify="center",
         ).pack()
         ctk.CTkLabel(
             top,
             text=f"{RLM}{TXT['full_test_sub'].format(count=len(all_ips))}",
-            font=self.font_normal, text_color="#bbbbbb",
-            anchor="center", justify="center"
+            font=self.font_normal,
+            text_color="#bbbbbb",
+            anchor="center",
+            justify="center",
         ).pack(pady=(2, 0))
 
         progframe = ctk.CTkFrame(win, fg_color=self.dark)
@@ -1132,9 +1333,12 @@ class DNSGameOptimizer:
         self.full_prog.set(0)
 
         self.full_status_label = ctk.CTkLabel(
-            progframe, text=f"{RLM}{TXT['status_ready']}",
-            font=self.font_normal, text_color=self.green,
-            anchor="center", justify="center"
+            progframe,
+            text=f"{RLM}{TXT['status_ready']}",
+            font=self.font_normal,
+            text_color=self.green,
+            anchor="center",
+            justify="center",
         )
         self.full_status_label.pack(pady=(0, 4))
 
@@ -1142,8 +1346,11 @@ class DNSGameOptimizer:
         listframe.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.full_result_box = ctk.CTkTextbox(
-            listframe, fg_color=self.darker, text_color="#e5e5e5",
-            font=self.font_normal, wrap="word"
+            listframe,
+            fg_color=self.darker,
+            text_color="#e5e5e5",
+            font=self.font_normal,
+            wrap="word",
         )
         self.full_result_box.pack(fill="both", expand=True, padx=4, pady=4)
         self.full_result_box.configure(state="disabled")
@@ -1152,39 +1359,52 @@ class DNSGameOptimizer:
         bottom.pack(fill="x", padx=10, pady=(0, 10))
 
         btn_cancel = ctk.CTkButton(
-            bottom, text=f"{RLM}{TXT['full_cancel']}",
-            fg_color="#ef4444", hover_color="#b91c1c",
-            text_color="white", font=self.font_normal,
-            width=120, height=32,
-            command=lambda: self.cancel_full_test(win)
+            bottom,
+            text=f"{RLM}{TXT['full_cancel']}",
+            fg_color="#ef4444",
+            hover_color="#b91c1c",
+            text_color="white",
+            font=self.font_normal,
+            width=120,
+            height=32,
+            command=lambda: self.cancel_full_test(win),
         )
         btn_cancel.pack(side="left", padx=4)
 
         btn_start = ctk.CTkButton(
-            bottom, text="شروع تست",
-            fg_color=self.blue, hover_color="#2563eb",
-            text_color="white", font=self.font_normal,
-            width=140, height=32,
+            bottom,
+            text="شروع تست",
+            fg_color=self.blue,
+            hover_color="#2563eb",
+            text_color="white",
+            font=self.font_normal,
+            width=140,
+            height=32,
             command=lambda: threading.Thread(
-                target=self.ping_all_advanced_thread,
-                args=(all_ips, win),
-                daemon=True
-            ).start()
+                target=self.ping_all_advanced_thread, args=(all_ips, win), daemon=True
+            ).start(),
         )
         btn_start.pack(side="left", padx=4)
 
         btn_close = ctk.CTkButton(
-            bottom, text=f"{RLM}{TXT['text_win_close']}",
-            fg_color=self.green, hover_color="#23985d",
-            text_color=self.darker, font=self.font_normal,
-            width=120, height=32, command=win.destroy
+            bottom,
+            text=f"{RLM}{TXT['text_win_close']}",
+            fg_color=self.green,
+            hover_color="#23985d",
+            text_color=self.darker,
+            font=self.font_normal,
+            width=120,
+            height=32,
+            command=win.destroy,
         )
         btn_close.pack(side="right", padx=4)
 
     def cancel_full_test(self, win):
         self.full_test_cancel = True
         try:
-            self.full_status_label.configure(text=f"{RLM}لغو شد", text_color="#f97373")
+            self.full_status_label.configure(
+                text=f"{RLM}لغو شد", text_color="#f97373"
+            )
         except:
             pass
 
@@ -1201,7 +1421,7 @@ class DNSGameOptimizer:
                         text=f"{RLM}{TXT['status_full_test'].format(i=i, total=total, name=name)}",
                         text_color=self.green,
                         anchor="center",
-                        justify="center"
+                        justify="center",
                     )
                 if hasattr(self, "full_prog"):
                     self.full_prog.set(i / total)
@@ -1219,7 +1439,10 @@ class DNSGameOptimizer:
                 if ap == float("inf"):
                     line = f"{name} - {ipaddr} Timeout - {pl:.1f}% {scv:.1f}\n"
                 else:
-                    line = f"{name} - {ipaddr} {ap:.1f} ms {jt:.1f} ms {pl:.1f}% {scv:.1f}\n"
+                    line = (
+                        f"{name} - {ipaddr} {ap:.1f} ms {jt:.1f} ms "
+                        f"{pl:.1f}% {scv:.1f}\n"
+                    )
                 self.full_result_box.insert("end", line)
                 self.full_result_box.see("end")
                 self.full_result_box.configure(state="disabled")
@@ -1234,8 +1457,13 @@ class DNSGameOptimizer:
                 line = f"{idx}. {name} - {ip} {aptext} - {pl:.1f}% {scv:.1f}\n"
             else:
                 line = TXT["full_test_line"].format(
-                    idx=idx, name=name, ip=ip,
-                    ap=f"{ap:.1f}", jl=f"{jt:.1f}", pl=f"{pl:.1f}", sc=f"{scv:.1f}"
+                    idx=idx,
+                    name=name,
+                    ip=ip,
+                    ap=f"{ap:.1f}",
+                    jl=f"{jt:.1f}",
+                    pl=f"{pl:.1f}",
+                    sc=f"{scv:.1f}",
                 )
                 line += "\n"
             lines.append(line)
@@ -1248,20 +1476,20 @@ class DNSGameOptimizer:
                         text=f"{RLM}لغو شد",
                         text_color="#f97373",
                         anchor="center",
-                        justify="center"
+                        justify="center",
                     )
                 else:
                     self.full_status_label.configure(
                         text=f"{RLM}{TXT['status_full_test_done']}",
                         text_color=self.green,
                         anchor="center",
-                        justify="center"
+                        justify="center",
                     )
                     self.status.configure(
                         text=f"{RLM}{TXT['status_full_test_done']}",
                         text_color=self.green,
                         anchor="center",
-                        justify="center"
+                        justify="center",
                     )
             if hasattr(self, "full_result_box"):
                 self.full_result_box.configure(state="normal")
@@ -1284,32 +1512,46 @@ class DNSGameOptimizer:
         top = ctk.CTkFrame(win, fg_color=self.dark)
         top.pack(fill="x", padx=10, pady=(10, 0))
         ctk.CTkLabel(
-            top, text=f"{RLM}{header}",
-            font=self.font_header, text_color=self.green,
-            anchor="center", justify="center"
+            top,
+            text=f"{RLM}{header}",
+            font=self.font_header,
+            text_color=self.green,
+            anchor="center",
+            justify="center",
         ).pack()
         if subtitle:
             ctk.CTkLabel(
-                top, text=f"{RLM}{subtitle}",
-                font=self.font_normal, text_color="#bbbbbb",
-                anchor="center", justify="center"
+                top,
+                text=f"{RLM}{subtitle}",
+                font=self.font_normal,
+                text_color="#bbbbbb",
+                anchor="center",
+                justify="center",
             ).pack(pady=(2, 0))
 
         txtframe = ctk.CTkFrame(win, fg_color=self.darker)
         txtframe.pack(fill="both", expand=True, padx=10, pady=10)
         textbox = ctk.CTkTextbox(
-            txtframe, fg_color=self.darker, text_color="#e5e5e5",
-            font=self.font_normal, wrap="word"
+            txtframe,
+            fg_color=self.darker,
+            text_color="#e5e5e5",
+            font=self.font_normal,
+            wrap="word",
         )
         textbox.pack(fill="both", expand=True, padx=4, pady=4)
         textbox.insert("1.0", body)
         textbox.configure(state="disabled")
 
         ctk.CTkButton(
-            win, text=f"{RLM}{TXT['text_win_close']}",
-            fg_color=self.green, hover_color="#23985d",
-            text_color=self.darker, font=self.font_normal,
-            width=120, height=32, command=win.destroy
+            win,
+            text=f"{RLM}{TXT['text_win_close']}",
+            fg_color=self.green,
+            hover_color="#23985d",
+            text_color=self.darker,
+            font=self.font_normal,
+            width=120,
+            height=32,
+            command=win.destroy,
         ).pack(pady=(0, 10))
 
     # ---------- DNS مخصوص بازی ----------
@@ -1330,23 +1572,32 @@ class DNSGameOptimizer:
         top = ctk.CTkFrame(win, fg_color=self.dark)
         top.pack(fill="x", padx=10, pady=(10, 0))
         ctk.CTkLabel(
-            top, text=f"{RLM}{TXT['games_best_title']} - {game_label_text}",
-            font=self.font_header, text_color=self.green,
-            anchor="center", justify="center"
+            top,
+            text=f"{RLM}{TXT['games_best_title']} - {game_label_text}",
+            font=self.font_header,
+            text_color=self.green,
+            anchor="center",
+            justify="center",
         ).pack(pady=(0, 2))
         ctk.CTkLabel(
-            top, text=f"{RLM}تست DNSها",
-            font=self.font_normal, text_color="#bbbbbb",
-            anchor="center", justify="center"
+            top,
+            text=f"{RLM}تست DNSها",
+            font=self.font_normal,
+            text_color="#bbbbbb",
+            anchor="center",
+            justify="center",
         ).pack()
 
         listframe = ctk.CTkScrollableFrame(win, fg_color=self.darker)
         listframe.pack(fill="both", expand=True, padx=10, pady=10)
 
         statuslabel = ctk.CTkLabel(
-            win, text=f"{RLM}{TXT['status_ready']}",
-            font=self.font_normal, text_color=self.green,
-            anchor="center", justify="center"
+            win,
+            text=f"{RLM}{TXT['status_ready']}",
+            font=self.font_normal,
+            text_color=self.green,
+            anchor="center",
+            justify="center",
         )
         statuslabel.pack(pady=(0, 8))
 
@@ -1361,20 +1612,29 @@ class DNSGameOptimizer:
             titleframe = ctk.CTkFrame(card, fg_color="transparent")
             titleframe.pack(fill="x", padx=8, pady=(6, 4))
             ctk.CTkLabel(
-                titleframe, text=f"{RLM}{dnsname}",
-                font=self.font_header, text_color=self.green,
-                anchor="w", justify="left"
+                titleframe,
+                text=f"{RLM}{dnsname}",
+                font=self.font_header,
+                text_color=self.green,
+                anchor="w",
+                justify="left",
             ).pack(side="left", padx=4)
             ctk.CTkLabel(
-                titleframe, text=f"{RLM}{ip}",
-                font=self.font_normal, text_color="#cccccc",
-                anchor="e", justify="right"
+                titleframe,
+                text=f"{RLM}{ip}",
+                font=self.font_normal,
+                text_color="#cccccc",
+                anchor="e",
+                justify="right",
             ).pack(side="right", padx=4)
 
             resultlabel = ctk.CTkLabel(
-                card, text=f"{RLM}...",
-                font=self.font_normal, text_color="#e5e5e5",
-                anchor="center", justify="center"
+                card,
+                text=f"{RLM}...",
+                font=self.font_normal,
+                text_color="#e5e5e5",
+                anchor="center",
+                justify="center",
             )
             resultlabel.pack(fill="x", padx=8, pady=(0, 4))
 
@@ -1382,20 +1642,27 @@ class DNSGameOptimizer:
             btnframe.pack(fill="x", padx=8, pady=(0, 8))
 
             connectbtn = ctk.CTkButton(
-                btnframe, text="اعمال DNS",
-                fg_color=self.green, hover_color="#23985d",
-                text_color=self.darker, font=self.font_normal,
+                btnframe,
+                text="اعمال DNS",
+                fg_color=self.green,
+                hover_color="#23985d",
+                text_color=self.darker,
+                font=self.font_normal,
                 width=140,
-                command=lambda n=dnsname, i=ip: self.apply_dns_with_test(n, i, statuslabel)
+                command=lambda n=dnsname, i=ip: self.apply_dns_with_test(
+                    n, i, statuslabel
+                ),
             )
             connectbtn.pack(side="left", padx=4)
 
-            rows.append({
-                "dnsname": dnsname,
-                "ip": ip,
-                "resultlabel": resultlabel,
-                "card": card,
-            })
+            rows.append(
+                {
+                    "dnsname": dnsname,
+                    "ip": ip,
+                    "resultlabel": resultlabel,
+                    "card": card,
+                }
+            )
 
         if not rows:
             messagebox.showinfo(TXT["games_best_title"], TXT["games_best_not_found"])
@@ -1414,14 +1681,20 @@ class DNSGameOptimizer:
                         text=f"{RLM}{i}/{total} - {dn}",
                         text_color=self.green,
                         anchor="center",
-                        justify="center"
-                    )
+                        justify="center",
+                    ),
                 )
                 avg_ping, packet_loss, jitter = ping_stats(ip)
                 sc = score_dns(avg_ping, jitter, packet_loss)
                 results.append((dnsname, ip, avg_ping, jitter, packet_loss, sc))
 
-                def update_row(lbl=row["resultlabel"], ap=avg_ping, jt=jitter, pl=packet_loss, scv=sc):
+                def update_row(
+                    lbl=row["resultlabel"],
+                    ap=avg_ping,
+                    jt=jitter,
+                    pl=packet_loss,
+                    scv=sc,
+                ):
                     if ap == float("inf"):
                         txt = f"{RLM}Timeout"
                     else:
@@ -1448,24 +1721,28 @@ class DNSGameOptimizer:
                         text=f"{RLM}{TXT['games_best_dns']} {game_label_text}: {name} ({ip}) - {scv:.1f}",
                         text_color=self.green,
                         anchor="center",
-                        justify="center"
+                        justify="center",
                     )
                     bottomframe = ctk.CTkFrame(win, fg_color="transparent")
                     bottomframe.pack(fill="x", padx=10, pady=(0, 8))
                     ctk.CTkButton(
                         bottomframe,
                         text="اعمال برترین DNS",
-                        fg_color=self.green, hover_color="#23985d",
-                        text_color=self.darker, font=self.font_normal,
+                        fg_color=self.green,
+                        hover_color="#23985d",
+                        text_color=self.darker,
+                        font=self.font_normal,
                         width=220,
-                        command=lambda n=name, i=ip: self.apply_dns_with_test(n, i, statuslabel)
+                        command=lambda n=name, i=ip: self.apply_dns_with_test(
+                            n, i, statuslabel
+                        ),
                     ).pack(side="left", padx=4)
                 else:
                     statuslabel.configure(
                         text=f"{RLM}{TXT['games_best_not_found']}",
                         text_color="#f97373",
                         anchor="center",
-                        justify="center"
+                        justify="center",
                     )
 
             self.root.after(0, finalize)
@@ -1484,7 +1761,7 @@ class DNSGameOptimizer:
                 text=f"{RLM}{msg}",
                 text_color=self.green,
                 anchor="center",
-                justify="center"
+                justify="center",
             )
         messagebox.showinfo(TXT["games_best_title"], msg)
 
@@ -1494,62 +1771,91 @@ class DNSGameOptimizer:
             proto = self.protocol_mode.get().lower()
             interface = self.selected_interface.get()
             if TXT["no_interface"] in interface or TXT["loading_interface"] in interface:
-                messagebox.showwarning(TXT["msg_warning"], TXT["warn_select_interface"])
+                messagebox.showwarning(
+                    TXT["msg_warning"], TXT["warn_select_interface"]
+                )
                 return
+
             cmd = f'netsh interface {proto} show dnsservers name="{interface}"'
             r = subprocess.run(
-                cmd, shell=True, capture_output=True, text=True,
-                encoding="utf-8", errors="ignore"
+                cmd,
+                shell=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="ignore",
             )
             raw = r.stdout
-            primary, secondary = None, None
+
+            dns_ips = []
             for line in raw.splitlines():
                 line = line.strip()
                 if not line:
                     continue
-                m = re.search(r"(?:(?:Address|IP Address)\s*:\s*)(.+)", line)
-                if m:
-                    ip = m.group(1).strip()
-                    if primary is None:
-                        primary = ip
-                    elif secondary is None:
-                        secondary = ip
-            if not primary and not secondary:
+                for part in line.split():
+                    part = part.strip()
+                    try:
+                        ipaddress.ip_address(part)
+                        dns_ips.append(part)
+                    except ValueError:
+                        continue
+
+            if not dns_ips:
                 out = TXT["current_dns_none"]
             else:
-                lines = [interface]
-                if primary:
-                    lines.append(f"DNS primary {primary}")
-                if secondary:
-                    lines.append(f"DNS secondary {secondary}")
+                lines = [
+                    f"رابط: {interface}",
+                    f"پروتکل: {self.protocol_mode.get()}",
+                ]
+                if len(dns_ips) >= 1:
+                    lines.append(f"DNS 1 (اصلی): {dns_ips[0]}")
+                if len(dns_ips) >= 2:
+                    lines.append(f"DNS 2 (دوم): {dns_ips[1]}")
+                if len(dns_ips) > 2:
+                    lines.append("DNS های اضافه:")
+                    for extra in dns_ips[2:]:
+                        lines.append(f" - {extra}")
                 out = "\n".join(lines)
+
         except Exception as e:
             out = str(e)
+
         self.show_text_window(
             TXT["current_dns_title"],
             TXT["current_dns_header"],
             "",
             out,
-            400, 260
+            400,
+            260,
         )
 
     def flush_dns(self):
         interface = self.selected_interface.get()
         if TXT["no_interface"] in interface or TXT["loading_interface"] in interface:
-            messagebox.showwarning(TXT["msg_warning"], TXT["warn_select_interface"])
+            messagebox.showwarning(
+                TXT["msg_warning"], TXT["warn_select_interface"]
+            )
             return
         proto = self.protocol_mode.get().lower()
         try:
             cmd_auto = f'netsh interface {proto} set dnsservers name="{interface}" dhcp'
             r1 = subprocess.run(
-                cmd_auto, shell=True, capture_output=True, text=True,
-                encoding="utf-8", errors="ignore"
+                cmd_auto,
+                shell=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="ignore",
             )
             if r1.returncode != 0:
                 raise Exception(r1.stdout + r1.stderr)
             r2 = subprocess.run(
-                "ipconfig /flushdns", shell=True, capture_output=True, text=True,
-                encoding="utf-8", errors="ignore"
+                "ipconfig /flushdns",
+                shell=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="ignore",
             )
             if r2.returncode != 0:
                 raise Exception(r2.stdout + r2.stderr)
@@ -1567,8 +1873,12 @@ class DNSGameOptimizer:
             ]
             for cmd in cmds:
                 subprocess.run(
-                    cmd, shell=True, capture_output=True, text=True,
-                    encoding="utf-8", errors="ignore"
+                    cmd,
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="ignore",
                 )
             messagebox.showinfo(TXT["btn_reset_net"], TXT["reset_ok"])
         except Exception:
