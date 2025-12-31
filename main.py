@@ -3,6 +3,14 @@ from tkinter import messagebox
 import subprocess, os, sys, json, re, ctypes, threading
 import ipaddress
 import math
+import webbrowser  # برای باز کردن لینک گیت‌هاب
+
+# برای مخفی کردن پنجره‌های CMD در ویندوز
+if os.name == "nt":
+    CREATE_NO_WINDOW = subprocess.CREATE_NO_WINDOW
+else:
+    CREATE_NO_WINDOW = 0
+
 
 # ---------- اجرای خودکار به‌صورت ادمین ----------
 def is_admin():
@@ -33,6 +41,12 @@ font_path = os.path.join(base_path, "assets", "Dana-Regular.ttf")
 icon_path = os.path.join(base_path, "assets", "icon.ico")
 DNS_FILE = os.path.join(base_path, "dns_list.json")
 GAMES_FILE = os.path.join(base_path, "games_list.json")
+
+# --- اطلاعات نسخه / سازنده / گیت‌هاب ---
+APP_VERSION = "1.0.0"
+APP_AUTHOR = "نام سازنده"
+APP_GITHUB = "https://github.com/User/Repo"
+APP_DESC = "توضیحات کوتاه درباره برنامه و کاربرد آن."
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("green")
@@ -217,7 +231,12 @@ def ping_latency(ip, timeout_ms=1000):
         af_switch = "-6" if ":" in ip else "-4"
         args = ["ping", af_switch, "-n", "1", "-w", str(timeout_ms), ip]
         r = subprocess.run(
-            args, capture_output=True, text=True, encoding="utf-8", errors="ignore"
+            args,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="ignore",
+            creationflags=CREATE_NO_WINDOW,
         )
         if r.returncode != 0 and "TTL=" not in r.stdout.upper():
             return float("inf")
@@ -237,7 +256,12 @@ def ping_stats(ip, count=5, timeout_ms=1000):
             af_switch = "-6" if ":" in ip else "-4"
             args = ["ping", af_switch, "-n", "1", "-w", str(timeout_ms), ip]
             r = subprocess.run(
-                args, capture_output=True, text=True, encoding="utf-8", errors="ignore"
+                args,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="ignore",
+                creationflags=CREATE_NO_WINDOW,
             )
             s = r.stdout
             if r.returncode != 0 or "TTL=" not in s.upper():
@@ -340,6 +364,7 @@ class DNSGameOptimizer:
                 text=True,
                 encoding="utf-8",
                 errors="ignore",
+                creationflags=CREATE_NO_WINDOW,
             )
             lines = r.stdout.splitlines()
             active_interfaces, all_interfaces = [], []
@@ -372,21 +397,49 @@ class DNSGameOptimizer:
         return interfaces[:20]
 
     def update_interface_list(self):
-        all_interfaces = self.get_all_interfaces()
-        active = [n for n, s in all_interfaces if s == "Connected"]
-        inactive = [n for n, s in all_interfaces if s != "Connected"]
-        self.interface_names = active + inactive
+        all_interfaces = self.get_all_interfaces()  # [(name, state), ...]
+        self.interface_names = [n for n, _ in all_interfaces]
+
         if not self.interface_names:
             self.interface_names = [f"{RLM}{TXT['no_interface']}"]
-
-        if self.selected_interface.get() not in self.interface_names:
             self.selected_interface.set(self.interface_names[0])
+        else:
+            current = self.selected_interface.get()
+            if current not in self.interface_names:
+                connected = [n for n, s in all_interfaces if s == "Connected"]
+
+                preferred = None
+                if connected:
+                    bad_keywords = [
+                        "vmware",
+                        "virtual",
+                        "vmnet",
+                        "loopback",
+                        "hyper-v",
+                        "vpn",
+                        "tap",
+                        "tunnel",
+                        "vbox",
+                    ]
+
+                    def is_virtual(name: str) -> bool:
+                        low = name.lower()
+                        return any(k in low for k in bad_keywords)
+
+                    real_connected = [n for n in connected if not is_virtual(n)]
+                    if real_connected:
+                        preferred = real_connected[0]
+                    else:
+                        preferred = connected[0]
+                else:
+                    preferred = self.interface_names[0]
+
+                self.selected_interface.set(preferred)
 
         if hasattr(self, "interface_menu"):
             self.interface_menu.configure(values=self.interface_names)
         if hasattr(self, "status"):
             self.update_status_display()
-
     def update_status_display(self):
         net = self.selected_interface.get()
         proto = self.protocol_mode.get()
@@ -527,6 +580,20 @@ class DNSGameOptimizer:
             command=self.open_full_test_window,
         )
         self.btn_ping_full.pack(side="left", padx=4, pady=8)
+
+        # دکمه درباره
+        self.btn_about = ctk.CTkButton(
+            btn_row,
+            text=f"{RLM}درباره",
+            width=top_btn_width,
+            height=top_btn_height,
+            fg_color="#111111",
+            hover_color="#374151",
+            text_color="white",
+            font=self.font_normal,
+            command=self.open_about_window,
+        )
+        self.btn_about.pack(side="left", padx=4, pady=8)
 
         content = ctk.CTkFrame(main, fg_color=self.dark)
         content.grid(row=2, column=0, sticky="nsew", padx=10, pady=8)
@@ -1137,13 +1204,11 @@ class DNSGameOptimizer:
         except Exception as e:
             messagebox.showerror(TXT["msg_error"], str(e))
 
-    # ---------- اعمال DNS و پینگ ----------
+    # ---------- اعمال DNS ----------
     def apply_dns(self, name, ips):
         interface = self.selected_interface.get()
         if TXT["no_interface"] in interface or TXT["loading_interface"] in interface:
-            messagebox.showwarning(
-                TXT["msg_warning"], TXT["warn_select_interface"]
-            )
+            messagebox.showwarning(TXT["msg_warning"], TXT["warn_select_interface"])
             return
 
         checked_ips = [ip.strip() for ip in ips if ip.strip()]
@@ -1155,14 +1220,13 @@ class DNSGameOptimizer:
 
         def worker():
             try:
-                # پاک‌کردن DNSهای قبلی
                 subprocess.run(
                     f'netsh interface {proto} delete dnsservers name="{interface}" all',
                     shell=True,
                     check=True,
+                    creationflags=CREATE_NO_WINDOW,
                 )
 
-                # ست DNS اصلی
                 if proto == "ipv4":
                     cmd_primary = (
                         f'netsh interface ipv4 add dnsserver '
@@ -1173,20 +1237,10 @@ class DNSGameOptimizer:
                         f'netsh interface ipv6 add dnsserver '
                         f'name="{interface}" address={checked_ips[0]} index=1'
                     )
-                subprocess.run(cmd_primary, shell=True, check=True)
-
-                # همین که اصلی ست شد، سریعاً استاتوس را آپدیت کن
-                self.root.after(
-                    0,
-                    lambda: self.status.configure(
-                        text=f"{RLM}{name} {TXT['status_dns_applied'].format(iface=interface)}",
-                        text_color=self.green,
-                        anchor="center",
-                        justify="center",
-                    ),
+                subprocess.run(
+                    cmd_primary, shell=True, check=True, creationflags=CREATE_NO_WINDOW
                 )
 
-                # ست DNS دوم در صورت وجود
                 if len(checked_ips) > 1:
                     if proto == "ipv4":
                         cmd_second = (
@@ -1198,24 +1252,38 @@ class DNSGameOptimizer:
                             f'netsh interface ipv6 add dnsserver '
                             f'name="{interface}" address={checked_ips[1]} index=2'
                         )
-                    subprocess.run(cmd_second, shell=True, check=True)
+                    subprocess.run(
+                        cmd_second,
+                        shell=True,
+                        check=True,
+                        creationflags=CREATE_NO_WINDOW,
+                    )
 
+                self.root.after(
+                    0,
+                    lambda: self.status.configure(
+                        text=f"{RLM}{name} "
+                        f"{TXT['status_dns_applied'].format(iface=interface)}",
+                        text_color=self.green,
+                        anchor="center",
+                        justify="center",
+                    ),
+                )
             except subprocess.CalledProcessError as e:
                 self.root.after(
                     0,
                     lambda: messagebox.showerror(
-                        TXT["msg_error"],
-                        TXT["err_set_dns"] + f"\n\n{e}",
+                        TXT["msg_error"], TXT["err_set_dns"] + f"\n{e}"
                     ),
                 )
             except Exception as e:
                 self.root.after(
-                    0,
-                    lambda: messagebox.showerror(TXT["msg_error"], str(e)),
+                    0, lambda: messagebox.showerror(TXT["msg_error"], str(e))
                 )
 
         threading.Thread(target=worker, daemon=True).start()
 
+    # ---------- پینگ ساده ----------
     def ping_single(self, name, ips):
         def worker():
             self.status.configure(
@@ -1235,10 +1303,13 @@ class DNSGameOptimizer:
 
         threading.Thread(target=worker, daemon=True).start()
 
+    # ---------- پینگ همه DNS ----------
     def ping_all_dns(self):
         all_ips = [(n, i[0]) for c in self.dns_data.values() for n, i in c.items()]
         if not all_ips:
-            messagebox.showinfo(TXT["ping_results_title"], TXT["info_no_dns"])
+            messagebox.showinfo(
+                TXT["ping_results_title"], TXT["info_no_dns"]
+            )
             return
         threading.Thread(
             target=self.ping_all_thread, args=(all_ips,), daemon=True
@@ -1260,13 +1331,11 @@ class DNSGameOptimizer:
             lat = ping_latency(ip)
             results.append((n, ip, lat))
 
-        results_sorted = sorted(results, key=lambda x: x[2])
+        result_sorted = sorted(results, key=lambda x: x[2])
         lines = []
-        for idx, (name, ip, lat) in enumerate(results_sorted, start=1):
+        for name, ip, lat in result_sorted:
             val = f"{lat} ms" if lat != float("inf") else "Timeout"
-            line = f"{idx}. " + TXT["ping_line"].format(
-                name=name, ip=ip, val=val
-            )
+            line = TXT["ping_line"].format(name=name, ip=ip, val=val)
             lines.append(line)
         out_text = "\n".join(lines)
 
@@ -1292,16 +1361,13 @@ class DNSGameOptimizer:
     def open_full_test_window(self):
         all_ips = [(n, i[0]) for c in self.dns_data.values() for n, i in c.items()]
         if not all_ips:
-            messagebox.showinfo(
-                TXT["full_test_title_info"], TXT["full_test_no_dns"]
-            )
+            messagebox.showinfo(TXT["full_test_title_info"], TXT["full_test_no_dns"])
             return
 
         self.full_test_cancel = False
-
         win = ctk.CTkToplevel(self.root)
         self.set_window_icon(win)
-        win.title(TXT["full_test_title_info"])
+        win.title(TXT["full_test_win_title"])
         win.geometry("600x420")
         win.resizable(False, False)
         win.configure(fg_color=self.dark)
@@ -1326,12 +1392,10 @@ class DNSGameOptimizer:
         ).pack(pady=(2, 0))
 
         progframe = ctk.CTkFrame(win, fg_color=self.dark)
-        progframe.pack(fill="x", padx=10, pady=(10, 0))
-
+        progframe.pack(fill="x", padx=10, pady=10)
         self.full_prog = ctk.CTkProgressBar(progframe)
-        self.full_prog.pack(fill="x", padx=10, pady=4)
+        self.full_prog.pack(fill="x", padx=10, pady=(4, 4))
         self.full_prog.set(0)
-
         self.full_status_label = ctk.CTkLabel(
             progframe,
             text=f"{RLM}{TXT['status_ready']}",
@@ -1344,7 +1408,6 @@ class DNSGameOptimizer:
 
         listframe = ctk.CTkScrollableFrame(win, fg_color=self.darker)
         listframe.pack(fill="both", expand=True, padx=10, pady=10)
-
         self.full_result_box = ctk.CTkTextbox(
             listframe,
             fg_color=self.darker,
@@ -1373,7 +1436,7 @@ class DNSGameOptimizer:
 
         btn_start = ctk.CTkButton(
             bottom,
-            text="شروع تست",
+            text=f"{RLM}{TXT['btn_ping_full']}",
             fg_color=self.blue,
             hover_color="#2563eb",
             text_color="white",
@@ -1403,7 +1466,7 @@ class DNSGameOptimizer:
         self.full_test_cancel = True
         try:
             self.full_status_label.configure(
-                text=f"{RLM}لغو شد", text_color="#f97373"
+                text=f"{RLM}تست متوقف شد", text_color="#f97373"
             )
         except:
             pass
@@ -1432,16 +1495,18 @@ class DNSGameOptimizer:
             sc = score_dns(avg_ping, jitter, packet_loss)
             results.append((n, ip, avg_ping, jitter, packet_loss, sc))
 
-            def append_line(name=n, ipaddr=ip, ap=avg_ping, jt=jitter, pl=packet_loss, scv=sc):
+            def append_line(
+                name=n, ipaddr=ip, ap=avg_ping, jt=jitter, pl=packet_loss, scv=sc
+            ):
                 if not hasattr(self, "full_result_box"):
                     return
                 self.full_result_box.configure(state="normal")
                 if ap == float("inf"):
-                    line = f"{name} - {ipaddr} Timeout - {pl:.1f}% {scv:.1f}\n"
+                    line = f"{name} - {ipaddr} | Timeout - {pl:.1f}% | {scv:.1f}\n"
                 else:
                     line = (
-                        f"{name} - {ipaddr} {ap:.1f} ms {jt:.1f} ms "
-                        f"{pl:.1f}% {scv:.1f}\n"
+                        f"{name} - {ipaddr} | {ap:.1f} ms | {jt:.1f} ms | "
+                        f"{pl:.1f}% | {scv:.1f}\n"
                     )
                 self.full_result_box.insert("end", line)
                 self.full_result_box.see("end")
@@ -1449,12 +1514,12 @@ class DNSGameOptimizer:
 
             self.root.after(0, append_line)
 
-        results_sorted = sorted(results, key=lambda x: (-x[5], x[2]))
+        result_sorted = sorted(results, key=lambda x: (-x[5], x[2]))
         lines = []
-        for idx, (name, ip, ap, jt, pl, scv) in enumerate(results_sorted, start=1):
+        for idx, (name, ip, ap, jt, pl, scv) in enumerate(result_sorted, start=1):
             if ap == float("inf"):
-                aptext = "Timeout"
-                line = f"{idx}. {name} - {ip} {aptext} - {pl:.1f}% {scv:.1f}\n"
+                ap_text = "Timeout"
+                line = f"{idx}. {name} - {ip} | {ap_text} - {pl:.1f}% | {scv:.1f}"
             else:
                 line = TXT["full_test_line"].format(
                     idx=idx,
@@ -1465,15 +1530,14 @@ class DNSGameOptimizer:
                     pl=f"{pl:.1f}",
                     sc=f"{scv:.1f}",
                 )
-                line += "\n"
             lines.append(line)
-        summary = "".join(lines)
+        summary = "\n".join(lines)
 
         def finalize():
             if hasattr(self, "full_status_label"):
                 if self.full_test_cancel:
                     self.full_status_label.configure(
-                        text=f"{RLM}لغو شد",
+                        text=f"{RLM}تست متوقف شد",
                         text_color="#f97373",
                         anchor="center",
                         justify="center",
@@ -1554,9 +1618,188 @@ class DNSGameOptimizer:
             command=win.destroy,
         ).pack(pady=(0, 10))
 
-    # ---------- DNS مخصوص بازی ----------
-    def open_game_dns_window(self, gamename):
-        mapping = self.games_data.get(gamename, {})
+    # ---------- درباره ----------
+    def open_about_window(self):
+        w = ctk.CTkToplevel(self.root)
+        self.set_window_icon(w)
+        w.title("درباره برنامه")
+        w.geometry("420x280")
+        w.resizable(False, False)
+        w.configure(fg_color=self.dark)
+
+        ctk.CTkLabel(
+            w,
+            text=f"{RLM}{TXT['app_title']}",
+            text_color=self.green,
+            font=self.font_title,
+            anchor="center",
+            justify="center",
+        ).pack(pady=(14, 4))
+
+        ctk.CTkLabel(
+            w,
+            text=f"{RLM}نسخه: {APP_VERSION}",
+            text_color="#bbbbbb",
+            font=self.font_normal,
+            anchor="center",
+            justify="center",
+        ).pack(pady=(0, 4))
+
+        ctk.CTkLabel(
+            w,
+            text=f"{RLM}سازنده: {APP_AUTHOR}",
+            text_color="#bbbbbb",
+            font=self.font_normal,
+            anchor="center",
+            justify="center",
+        ).pack(pady=(0, 4))
+
+        link_label = ctk.CTkLabel(
+            w,
+            text=f"{RLM}{APP_GITHUB}",
+            text_color=self.blue,
+            font=self.font_normal,
+            anchor="center",
+            justify="center",
+        )
+        link_label.pack(pady=(4, 6))
+        try:
+            link_label.configure(cursor="hand2")
+        except Exception:
+            pass
+
+        def open_github(event=None):
+            if APP_GITHUB:
+                webbrowser.open(APP_GITHUB)
+
+        link_label.bind("<Button-1>", open_github)
+
+        ctk.CTkLabel(
+            w,
+            text=f"{RLM}{APP_DESC}",
+            text_color="#dddddd",
+            font=self.font_normal,
+            anchor="center",
+            justify="center",
+            wraplength=380,
+        ).pack(pady=(4, 10))
+
+    # ---------- DNS فعلی ----------
+    def show_current_dns(self):
+        try:
+            proto = self.protocol_mode.get().lower()
+            interface = self.selected_interface.get()
+            if TXT["no_interface"] in interface or TXT["loading_interface"] in interface:
+                messagebox.showwarning(TXT["msg_warning"], TXT["warn_select_interface"])
+                return
+            cmd = f'netsh interface {proto} show dnsservers name="{interface}"'
+            r = subprocess.run(
+                cmd,
+                shell=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="ignore",
+                creationflags=CREATE_NO_WINDOW,
+            )
+            raw = r.stdout
+            dns_ips = []
+            for line in raw.splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                for part in line.split():
+                    part = part.strip()
+                    try:
+                        ipaddress.ip_address(part)
+                        dns_ips.append(part)
+                    except ValueError:
+                        continue
+            if not dns_ips:
+                out = TXT["current_dns_none"]
+            else:
+                lines = [interface, self.protocol_mode.get()]
+                if len(dns_ips) >= 1:
+                    lines.append(f"DNS 1: {dns_ips[0]}")
+                if len(dns_ips) >= 2:
+                    lines.append(f"DNS 2: {dns_ips[1]}")
+                if len(dns_ips) > 2:
+                    lines.append("DNS اضافه:")
+                    for extra in dns_ips[2:]:
+                        lines.append(f" - {extra}")
+                out = "\n".join(lines)
+        except Exception as e:
+            out = str(e)
+
+        self.show_text_window(
+            TXT["current_dns_title"],
+            TXT["current_dns_header"],
+            "",
+            out,
+            400,
+            260,
+        )
+
+    # ---------- ریست DNS ----------
+    def flush_dns(self):
+        interface = self.selected_interface.get()
+        if TXT["no_interface"] in interface or TXT["loading_interface"] in interface:
+            messagebox.showwarning(TXT["msg_warning"], TXT["warn_select_interface"])
+            return
+        proto = self.protocol_mode.get().lower()
+        try:
+            cmd_auto = (
+                f'netsh interface {proto} set dnsservers name="{interface}" source=dhcp'
+            )
+            r1 = subprocess.run(
+                cmd_auto,
+                shell=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="ignore",
+                creationflags=CREATE_NO_WINDOW,
+            )
+            if r1.returncode != 0:
+                raise Exception(r1.stdout + r1.stderr)
+            r2 = subprocess.run(
+                "ipconfig /flushdns",
+                shell=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="ignore",
+                creationflags=CREATE_NO_WINDOW,
+            )
+            if r2.returncode != 0:
+                raise Exception(r2.stdout + r2.stderr)
+            messagebox.showinfo(TXT["btn_flush_dns"], TXT["flush_ok"])
+        except Exception:
+            messagebox.showerror(TXT["msg_error"], TXT["flush_err"])
+
+    # ---------- ریست شبکه ----------
+    def restart_network(self):
+        if not messagebox.askyesno(TXT["btn_reset_net"], TXT["reset_confirm"]):
+            return
+        try:
+            cmds = ["netsh int ip reset", "netsh winsock reset"]
+            for cmd in cmds:
+                subprocess.run(
+                    cmd,
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="ignore",
+                    creationflags=CREATE_NO_WINDOW,
+                )
+            messagebox.showinfo(TXT["btn_reset_net"], TXT["reset_ok"])
+        except Exception:
+            messagebox.showerror(TXT["msg_error"], TXT["reset_err"])
+
+    # ---------- DNS بازی‌ها ----------
+    def open_game_dns_window(self, game_name):
+        mapping = self.games_data.get(game_name, {})
         if not mapping:
             messagebox.showinfo(TXT["games_best_title"], TXT["games_best_not_found"])
             return
@@ -1568,7 +1811,8 @@ class DNSGameOptimizer:
         win.resizable(False, False)
         win.configure(fg_color=self.dark)
 
-        game_label_text = TXT.get(f"game_{gamename}", gamename)
+        game_label_text = TXT.get(f"game_{game_name}", game_name)
+
         top = ctk.CTkFrame(win, fg_color=self.dark)
         top.pack(fill="x", padx=10, pady=(10, 0))
         ctk.CTkLabel(
@@ -1581,7 +1825,7 @@ class DNSGameOptimizer:
         ).pack(pady=(0, 2))
         ctk.CTkLabel(
             top,
-            text=f"{RLM}تست DNSها",
+            text=f"{RLM}DNSهای پیشنهادی",
             font=self.font_normal,
             text_color="#bbbbbb",
             anchor="center",
@@ -1602,7 +1846,7 @@ class DNSGameOptimizer:
         statuslabel.pack(pady=(0, 8))
 
         rows = []
-        for dnsname, ips in mapping.items():
+        for dns_name, ips in mapping.items():
             if not ips:
                 continue
             ip = ips[0]
@@ -1613,7 +1857,7 @@ class DNSGameOptimizer:
             titleframe.pack(fill="x", padx=8, pady=(6, 4))
             ctk.CTkLabel(
                 titleframe,
-                text=f"{RLM}{dnsname}",
+                text=f"{RLM}{dns_name}",
                 font=self.font_header,
                 text_color=self.green,
                 anchor="w",
@@ -1643,13 +1887,13 @@ class DNSGameOptimizer:
 
             connectbtn = ctk.CTkButton(
                 btnframe,
-                text="اعمال DNS",
+                text=f"{RLM}اتصال و تست",
                 fg_color=self.green,
                 hover_color="#23985d",
                 text_color=self.darker,
                 font=self.font_normal,
                 width=140,
-                command=lambda n=dnsname, i=ip: self.apply_dns_with_test(
+                command=lambda n=dns_name, i=ip: self.apply_dns_with_test(
                     n, i, statuslabel
                 ),
             )
@@ -1657,9 +1901,9 @@ class DNSGameOptimizer:
 
             rows.append(
                 {
-                    "dnsname": dnsname,
+                    "dns_name": dns_name,
                     "ip": ip,
-                    "resultlabel": resultlabel,
+                    "result_label": resultlabel,
                     "card": card,
                 }
             )
@@ -1673,23 +1917,24 @@ class DNSGameOptimizer:
             results = []
             total = len(rows)
             for idx, row in enumerate(rows, start=1):
-                dnsname = row["dnsname"]
+                dns_name = row["dns_name"]
                 ip = row["ip"]
-                self.root.after(
-                    0,
-                    lambda i=idx, dn=dnsname: statuslabel.configure(
-                        text=f"{RLM}{i}/{total} - {dn}",
+
+                def update_status(i=idx, dn=dns_name):
+                    statuslabel.configure(
+                        text=f"{RLM}{TXT['status_full_test'].format(i=i, total=total, name=dn)}",
                         text_color=self.green,
                         anchor="center",
                         justify="center",
-                    ),
-                )
+                    )
+
+                self.root.after(0, update_status)
                 avg_ping, packet_loss, jitter = ping_stats(ip)
                 sc = score_dns(avg_ping, jitter, packet_loss)
-                results.append((dnsname, ip, avg_ping, jitter, packet_loss, sc))
+                results.append((dns_name, ip, avg_ping, jitter, packet_loss, sc))
 
                 def update_row(
-                    lbl=row["resultlabel"],
+                    lbl=row["result_label"],
                     ap=avg_ping,
                     jt=jitter,
                     pl=packet_loss,
@@ -1698,7 +1943,10 @@ class DNSGameOptimizer:
                     if ap == float("inf"):
                         txt = f"{RLM}Timeout"
                     else:
-                        txt = f"{RLM}{ap:.1f} ms | {jt:.1f} ms | {pl:.1f}% | {scv:.1f}"
+                        txt = (
+                            f"{RLM}{ap:.1f} ms | {jt:.1f} ms | "
+                            f"{pl:.1f}% | {scv:.1f}"
+                        )
                     lbl.configure(text=txt)
 
                 self.root.after(0, update_row)
@@ -1718,25 +1966,11 @@ class DNSGameOptimizer:
                 if best is not None:
                     name, ip, ap, jt, pl, scv = best
                     statuslabel.configure(
-                        text=f"{RLM}{TXT['games_best_dns']} {game_label_text}: {name} ({ip}) - {scv:.1f}",
+                        text=f"{RLM}{TXT['games_best_dns']} {game_label_text}: {name} {ip} - {scv:.1f}",
                         text_color=self.green,
                         anchor="center",
                         justify="center",
                     )
-                    bottomframe = ctk.CTkFrame(win, fg_color="transparent")
-                    bottomframe.pack(fill="x", padx=10, pady=(0, 8))
-                    ctk.CTkButton(
-                        bottomframe,
-                        text="اعمال برترین DNS",
-                        fg_color=self.green,
-                        hover_color="#23985d",
-                        text_color=self.darker,
-                        font=self.font_normal,
-                        width=220,
-                        command=lambda n=name, i=ip: self.apply_dns_with_test(
-                            n, i, statuslabel
-                        ),
-                    ).pack(side="left", padx=4)
                 else:
                     statuslabel.configure(
                         text=f"{RLM}{TXT['games_best_not_found']}",
@@ -1754,7 +1988,10 @@ class DNSGameOptimizer:
         lat = ping_latency(ip)
         lat_int = int(lat) if lat != float("inf") else -1
         msg = TXT["games_best_body"].format(
-            game=name, name=name, ip=ip, lat=(lat_int if lat_int >= 0 else 999)
+            game="",
+            name=name,
+            ip=ip,
+            lat=lat_int if lat_int >= 0 else 999,
         )
         if statuslabel is not None:
             statuslabel.configure(
@@ -1764,125 +2001,6 @@ class DNSGameOptimizer:
                 justify="center",
             )
         messagebox.showinfo(TXT["games_best_title"], msg)
-
-    # ---------- DNS فعلی و ریست ----------
-    def show_current_dns(self):
-        try:
-            proto = self.protocol_mode.get().lower()
-            interface = self.selected_interface.get()
-            if TXT["no_interface"] in interface or TXT["loading_interface"] in interface:
-                messagebox.showwarning(
-                    TXT["msg_warning"], TXT["warn_select_interface"]
-                )
-                return
-
-            cmd = f'netsh interface {proto} show dnsservers name="{interface}"'
-            r = subprocess.run(
-                cmd,
-                shell=True,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="ignore",
-            )
-            raw = r.stdout
-
-            dns_ips = []
-            for line in raw.splitlines():
-                line = line.strip()
-                if not line:
-                    continue
-                for part in line.split():
-                    part = part.strip()
-                    try:
-                        ipaddress.ip_address(part)
-                        dns_ips.append(part)
-                    except ValueError:
-                        continue
-
-            if not dns_ips:
-                out = TXT["current_dns_none"]
-            else:
-                lines = [
-                    f"رابط: {interface}",
-                    f"پروتکل: {self.protocol_mode.get()}",
-                ]
-                if len(dns_ips) >= 1:
-                    lines.append(f"DNS 1 (اصلی): {dns_ips[0]}")
-                if len(dns_ips) >= 2:
-                    lines.append(f"DNS 2 (دوم): {dns_ips[1]}")
-                if len(dns_ips) > 2:
-                    lines.append("DNS های اضافه:")
-                    for extra in dns_ips[2:]:
-                        lines.append(f" - {extra}")
-                out = "\n".join(lines)
-
-        except Exception as e:
-            out = str(e)
-
-        self.show_text_window(
-            TXT["current_dns_title"],
-            TXT["current_dns_header"],
-            "",
-            out,
-            400,
-            260,
-        )
-
-    def flush_dns(self):
-        interface = self.selected_interface.get()
-        if TXT["no_interface"] in interface or TXT["loading_interface"] in interface:
-            messagebox.showwarning(
-                TXT["msg_warning"], TXT["warn_select_interface"]
-            )
-            return
-        proto = self.protocol_mode.get().lower()
-        try:
-            cmd_auto = f'netsh interface {proto} set dnsservers name="{interface}" dhcp'
-            r1 = subprocess.run(
-                cmd_auto,
-                shell=True,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="ignore",
-            )
-            if r1.returncode != 0:
-                raise Exception(r1.stdout + r1.stderr)
-            r2 = subprocess.run(
-                "ipconfig /flushdns",
-                shell=True,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="ignore",
-            )
-            if r2.returncode != 0:
-                raise Exception(r2.stdout + r2.stderr)
-            messagebox.showinfo(TXT["btn_flush_dns"], TXT["flush_ok"])
-        except Exception:
-            messagebox.showerror(TXT["msg_error"], TXT["flush_err"])
-
-    def restart_network(self):
-        if not messagebox.askyesno(TXT["btn_reset_net"], TXT["reset_confirm"]):
-            return
-        try:
-            cmds = [
-                "netsh int ip reset",
-                "netsh winsock reset",
-            ]
-            for cmd in cmds:
-                subprocess.run(
-                    cmd,
-                    shell=True,
-                    capture_output=True,
-                    text=True,
-                    encoding="utf-8",
-                    errors="ignore",
-                )
-            messagebox.showinfo(TXT["btn_reset_net"], TXT["reset_ok"])
-        except Exception:
-            messagebox.showerror(TXT["msg_error"], TXT["reset_err"])
 
 
 if __name__ == "__main__":
