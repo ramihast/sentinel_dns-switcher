@@ -47,7 +47,7 @@ APP_VERSION    = "1.0.0 (Early Access)"
 APP_AUTHOR     = "aliMousavi"
 APP_AUTHOR_URL = "https://raminetcv.ir/"  # لینک پروفایل خودت
 APP_GITHUB     = "https://github.com/ramihast/sentinel_dns-switcher"
-APP_DESC = "ابزاری جامع برای انتخاب و تنظیم هوشمند بهترین دی‌ان‌اس بر اساس نیاز هر کاربر، با هدف فراهم کردن پایدارترین و سریع‌ترین شرایط اتصال."
+APP_DESC = "ابزاری جامع برای انتخاب و تنظیم هوشمند بهترین دی‌ان‌اس بر اساس نیاز هر کاربر، با هدف فراهم کردن پایدارترین و سریع‌ترین شرایط اتصال"
 
 
 
@@ -63,7 +63,7 @@ RLM = "\u200f"
 
 TXT = {
     "app_title": "Sentinel - DNS Switcher",
-    "app_subtitle": "از تست تا سوئیچ، همه‌چیز خودکار!",
+    "app_subtitle": "از تست تا سوئیچ، همه‌چیز خودکار",
     "btn_add_dns": "DNS افزودن",
     "btn_ping_all": "پینگ کامل",
     "btn_ping_full": "تست کامل",
@@ -91,7 +91,7 @@ TXT = {
     "dns_ip_second": "دوم IP",
     "status_dns_edited": "ویرایش شد",
     "delete_only_custom": "های ثبت شده توسط کاربر قابل حذف هستند DNS فقط",
-    "delete_confirm": "مطمئن هستید؟ \"{name}\" آیا از حذف",
+    "delete_confirm": "مطمئن هستید؟ DNS آیا از حذف این",
     "status_dns_deleted": "حذف شد",
     "warn_select_interface": "لطفاً کارت شبکه را انتخاب کنید",
     "err_invalid_dns_ips": "این DNS شامل IP نامعتبر است، لطفاً اصلاح کنید",
@@ -587,7 +587,7 @@ class DNSGameOptimizer:
         # دکمه درباره
         self.btn_about = ctk.CTkButton(
             btn_row,
-            text=f"{RLM}درباره",
+            text=f"{RLM}درباره برنامه",
             width=top_btn_width,
             height=top_btn_height,
             fg_color="#111111",
@@ -1643,7 +1643,7 @@ class DNSGameOptimizer:
        # نسخه
        ctk.CTkLabel(
            w,
-           text=f"{RLM}نسخه: {APP_VERSION}",
+           text=f"{RLM} APP VERSION {APP_VERSION}",
            text_color="#bbbbbb",
            font=self.font_normal,
            anchor="center",
