@@ -43,10 +43,13 @@ DNS_FILE = os.path.join(base_path, "dns_list.json")
 GAMES_FILE = os.path.join(base_path, "games_list.json")
 
 # --- اطلاعات نسخه / سازنده / گیت‌هاب ---
-APP_VERSION = "1.0.0"
-APP_AUTHOR = "نام سازنده"
-APP_GITHUB = "https://github.com/User/Repo"
-APP_DESC = "توضیحات کوتاه درباره برنامه و کاربرد آن."
+APP_VERSION    = "1.0.0 (Early Access)"
+APP_AUTHOR     = "aliMousavi"
+APP_AUTHOR_URL = "https://raminetcv.ir/"  # لینک پروفایل خودت
+APP_GITHUB     = "https://github.com/ramihast/sentinel_dns-switcher"
+APP_DESC = "ابزاری جامع برای انتخاب و تنظیم هوشمند بهترین دی‌ان‌اس بر اساس نیاز هر کاربر، با هدف فراهم کردن پایدارترین و سریع‌ترین شرایط اتصال."
+
+
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("green")
@@ -59,40 +62,40 @@ except:
 RLM = "\u200f"
 
 TXT = {
-    "app_title": "DNS گیم اپتیمایزر",
-    "app_subtitle": "بهترین DNS برای پینگ بهتر بازی‌ها",
-    "btn_add_dns": "افزودن DNS",
-    "btn_ping_all": "پینگ همه DNS",
-    "btn_ping_full": "تست کامل DNS",
-    "btn_current_dns": "DNS فعلی",
-    "tab_dns": "DNS ها",
+    "app_title": "Sentinel - DNS Switcher",
+    "app_subtitle": "از تست تا سوئیچ، همه‌چیز خودکار!",
+    "btn_add_dns": "DNS افزودن",
+    "btn_ping_all": "پینگ کامل",
+    "btn_ping_full": "تست کامل",
+    "btn_current_dns": "فعلی DNS",
+    "tab_dns": "ها DNS",
     "tab_games": "بازی‌ها",
     "status_ready": "آماده",
     "netcard_title": "کارت شبکه فعال",
     "btn_refresh": "به‌روزرسانی",
     "proto_title": "پروتکل",
     "tools_title": "ابزارهای سریع",
-    "btn_flush_dns": "ریست DNS",
+    "btn_flush_dns": "DNS ریست",
     "btn_reset_net": "ریست شبکه",
-    "dns_added_title": "DNS جدید",
-    "dns_name": "نام DNS",
-    "dns_ip_main": "IP اصلی",
-    "dns_ip_secondary": "IP دوم (اختیاری)",
+    "dns_added_title": "جدید DNS",
+    "dns_name": "DNS نام",
+    "dns_ip_main": "اصلی IP",
+    "dns_ip_secondary": "دوم (اختیاری) IP",
     "btn_save": "ذخیره",
-    "warn_required": "نام و IP اصلی الزامی هستند",
-    "err_ip_main": "IP اصلی در فرمت IPv4/IPv6 معتبر نیست",
-    "err_ip_second": "IP دوم در فرمت IPv4/IPv6 معتبر نیست",
+    "warn_required": "اصلی الزامی هستند IP نام و ",
+    "err_ip_main": "اصلی معتبر نیست IP",
+    "err_ip_second": "دوم معتبر نیست IP",
     "warn_duplicate_name": "این نام قبلاً ثبت شده است",
     "status_dns_added": "افزوده شد",
-    "edit_dns_title": "ویرایش DNS",
-    "dns_ip_second": "IP دوم",
+    "edit_dns_title": "DNS ویرایش",
+    "dns_ip_second": "دوم IP",
     "status_dns_edited": "ویرایش شد",
-    "delete_only_custom": "فقط DNSهای ثبت‌شده توسط کاربر قابل حذف هستند",
-    "delete_confirm": "آیا از حذف \"{name}\" مطمئن هستید؟",
+    "delete_only_custom": "های ثبت شده توسط کاربر قابل حذف هستند DNS فقط",
+    "delete_confirm": "مطمئن هستید؟ \"{name}\" آیا از حذف",
     "status_dns_deleted": "حذف شد",
     "warn_select_interface": "لطفاً کارت شبکه را انتخاب کنید",
     "err_invalid_dns_ips": "این DNS شامل IP نامعتبر است، لطفاً اصلاح کنید",
-    "status_dns_applied": "روی «{iface}» اعمال شد",
+    "status_dns_applied": "اعمال شد «{iface}» روی",
     "err_set_dns": "اعمال DNS با خطا مواجه شد",
     "status_ping_single": "در حال پینگ «{name}»...",
     "status_ping_single_done": "پینگ «{name}»: {lat}",
@@ -111,15 +114,15 @@ TXT = {
     "full_test_sub": "{count} سرور تست شد (پینگ، جیتر، پکت‌لاس، امتیاز)",
     "full_test_line": "{idx}. {name} - {ip} | پینگ: {ap} ms | جیتر: {jl} ms | پکت‌لاس: {pl}% | امتیاز: {sc}",
     "games_best_dns": "بهترین DNS برای",
-    "games_best_title": "بهترین DNS برای بازی",
+    "games_best_title": "برای بازی DNS بهترین",
     "games_best_body": "بهترین DNS برای «{game}»: {name} ({ip}) با پینگ حدود {lat}ms",
-    "games_best_not_found": "DNS مناسبی برای این بازی یافت نشد",
+    "games_best_not_found": "مناسبی برای این بازی یافت نشد DNS",
     "text_win_close": "بستن",
-    "current_dns_title": "DNS فعلی",
-    "current_dns_header": "📡 DNSهای فعلی رابط‌های متصل",
-    "current_dns_none": "DNS تنظیم نشده است",
-    "flush_ok": "✅ DNS اینترفیس انتخاب‌شده ریست شد",
-    "flush_err": "ریست DNS با خطا مواجه شد",
+    "current_dns_title": "فعلی DNS",
+    "current_dns_header": "فعلی متصل DNS:",
+    "current_dns_none": "تنظیم نشده DNS",
+    "flush_ok": " اینترفیس انتخاب شده ریست شد DNS",
+    "flush_err": "با خطا مواجه شد DNS ریست کردن",
     "reset_confirm": "آیا از ریست تنظیمات شبکه مطمئن هستید؟",
     "reset_ok": "ریست شبکه انجام شد. لطفاً سیستم را ریستارت کنید.",
     "reset_err": "ریست شبکه با خطا مواجه شد",
@@ -127,7 +130,7 @@ TXT = {
     "msg_warning": "⚠️",
     "msg_delete": "حذف",
     "no_interface": "(هیچ کارت شبکه‌ای یافت نشد)",
-    "loading_interface": "(در حال بارگذاری...)",
+    "loading_interface": "(درحال بارگزاری)",
     "btn_set": "اتصال",
     "btn_ping": "پینگ",
     "cat_local": "ایرانی",
@@ -1620,70 +1623,90 @@ class DNSGameOptimizer:
 
     # ---------- درباره ----------
     def open_about_window(self):
-        w = ctk.CTkToplevel(self.root)
-        self.set_window_icon(w)
-        w.title("درباره برنامه")
-        w.geometry("420x280")
-        w.resizable(False, False)
-        w.configure(fg_color=self.dark)
-
-        ctk.CTkLabel(
-            w,
-            text=f"{RLM}{TXT['app_title']}",
-            text_color=self.green,
-            font=self.font_title,
-            anchor="center",
-            justify="center",
-        ).pack(pady=(14, 4))
-
-        ctk.CTkLabel(
-            w,
-            text=f"{RLM}نسخه: {APP_VERSION}",
-            text_color="#bbbbbb",
-            font=self.font_normal,
-            anchor="center",
-            justify="center",
-        ).pack(pady=(0, 4))
-
-        ctk.CTkLabel(
-            w,
-            text=f"{RLM}سازنده: {APP_AUTHOR}",
-            text_color="#bbbbbb",
-            font=self.font_normal,
-            anchor="center",
-            justify="center",
-        ).pack(pady=(0, 4))
-
-        link_label = ctk.CTkLabel(
-            w,
-            text=f"{RLM}{APP_GITHUB}",
-            text_color=self.blue,
-            font=self.font_normal,
-            anchor="center",
-            justify="center",
-        )
-        link_label.pack(pady=(4, 6))
-        try:
-            link_label.configure(cursor="hand2")
-        except Exception:
-            pass
-
-        def open_github(event=None):
-            if APP_GITHUB:
-                webbrowser.open(APP_GITHUB)
-
-        link_label.bind("<Button-1>", open_github)
-
-        ctk.CTkLabel(
-            w,
-            text=f"{RLM}{APP_DESC}",
-            text_color="#dddddd",
-            font=self.font_normal,
-            anchor="center",
-            justify="center",
-            wraplength=380,
-        ).pack(pady=(4, 10))
-
+       w = ctk.CTkToplevel(self.root)
+       self.set_window_icon(w)
+       w.title("درباره برنامه")
+       w.geometry("420x300")
+       w.resizable(False, False)
+       w.configure(fg_color=self.dark)
+    
+       # عنوان
+       ctk.CTkLabel(
+           w,
+           text=f"{RLM}{TXT['app_title']}",
+           text_color=self.green,
+           font=self.font_title,
+           anchor="center",
+           justify="center",
+       ).pack(pady=(14, 4))
+    
+       # نسخه
+       ctk.CTkLabel(
+           w,
+           text=f"{RLM}نسخه: {APP_VERSION}",
+           text_color="#bbbbbb",
+           font=self.font_normal,
+           anchor="center",
+           justify="center",
+       ).pack(pady=(0, 4))
+    
+       # --- سازنده (لینک‌دار) ---
+       author_label = ctk.CTkLabel(
+           w,
+           text=f"{RLM} {APP_AUTHOR}",
+           text_color=self.blue,
+           font=self.font_normal,
+           anchor="center",
+           justify="center",
+       )
+       author_label.pack(pady=(0, 2))
+    
+       try:
+           author_label.configure(cursor="hand2")
+       except Exception:
+           pass
+    
+       def open_author(event=None):
+           if APP_AUTHOR_URL:
+               webbrowser.open(APP_AUTHOR_URL)
+    
+       author_label.bind("<Button-1>", open_author)
+    
+       # --- گیت هاب برنامه (زیر سازنده، لینک‌دار) ---
+       github_label = ctk.CTkLabel(
+           w,
+           text=f"{RLM}گیت هاب برنامه",
+           text_color=self.blue,
+           font=self.font_normal,
+           anchor="center",
+           justify="center",
+       )
+       github_label.pack(pady=(2, 6))
+    
+       try:
+           github_label.configure(cursor="hand2")
+       except Exception:
+           pass
+    
+       def open_github(event=None):
+           if APP_GITHUB:
+               webbrowser.open(APP_GITHUB)
+    
+       github_label.bind("<Button-1>", open_github)
+    
+       # توضیح
+       ctk.CTkLabel(
+           w,
+           text=f"{RLM}{APP_DESC}",
+           text_color="#dddddd",
+           font=self.font_normal,
+           anchor="center",
+           justify="center",
+           wraplength=380,
+       ).pack(pady=(4, 10))
+    
+       
+    
     # ---------- DNS فعلی ----------
     def show_current_dns(self):
         try:
