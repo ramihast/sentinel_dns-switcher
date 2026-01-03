@@ -47,7 +47,7 @@ APP_VERSION = "1.0.0 (Early Access)"
 APP_AUTHOR = "aliMousavi"
 APP_AUTHOR_URL = "https://raminetcv.ir/"
 APP_GITHUB = "https://github.com/ramihast/sentinel_dns-switcher"
-APP_DESC = "ابزاری جامع برای انتخاب و تنظیم هوشمند بهترین دی‌ان‌اس بر اساس نیاز هر کاربر، با هدف فراهم کردن پایدارترین و سریع‌ترین شرایط اتصال"
+APP_DESC = "ابزاری جامع برای انتخاب هوشمند بهترین دی‌ان‌اس بر اساس نیاز هر کاربر"
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("green")
