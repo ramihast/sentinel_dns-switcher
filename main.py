@@ -3,7 +3,7 @@ from tkinter import messagebox
 import subprocess, os, sys, json, re, ctypes, threading
 import ipaddress
 import math
-import webbrowser  # برای باز کردن لینک گیت‌هاب
+import webbrowser  # برای باز کردن لینک‌ها
 
 # برای مخفی کردن پنجره‌های CMD در ویندوز
 if os.name == "nt":
@@ -43,13 +43,11 @@ DNS_FILE = os.path.join(base_path, "dns_list.json")
 GAMES_FILE = os.path.join(base_path, "games_list.json")
 
 # --- اطلاعات نسخه / سازنده / گیت‌هاب ---
-APP_VERSION    = "1.0.0 (Early Access)"
-APP_AUTHOR     = "aliMousavi"
-APP_AUTHOR_URL = "https://raminetcv.ir/"  # لینک پروفایل خودت
-APP_GITHUB     = "https://github.com/ramihast/sentinel_dns-switcher"
+APP_VERSION = "1.0.0 (Early Access)"
+APP_AUTHOR = "aliMousavi"
+APP_AUTHOR_URL = "https://raminetcv.ir/"
+APP_GITHUB = "https://github.com/ramihast/sentinel_dns-switcher"
 APP_DESC = "ابزاری جامع برای انتخاب و تنظیم هوشمند بهترین دی‌ان‌اس بر اساس نیاز هر کاربر، با هدف فراهم کردن پایدارترین و سریع‌ترین شرایط اتصال"
-
-
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("green")
@@ -313,9 +311,9 @@ class DNSGameOptimizer:
             except:
                 pass
 
-        self.root.geometry("900x700")
-        self.root.minsize(900, 700)
-        self.root.maxsize(900, 700)
+        self.root.geometry("900x580")
+        self.root.minsize(900, 580)
+        self.root.maxsize(900, 580)
         self.root.resizable(False, False)
         self.root.title(f"{RLM}{TXT['app_title']}")
 
@@ -400,7 +398,7 @@ class DNSGameOptimizer:
         return interfaces[:20]
 
     def update_interface_list(self):
-        all_interfaces = self.get_all_interfaces()  # [(name, state), ...]
+        all_interfaces = self.get_all_interfaces()
         self.interface_names = [n for n, _ in all_interfaces]
 
         if not self.interface_names:
@@ -443,6 +441,7 @@ class DNSGameOptimizer:
             self.interface_menu.configure(values=self.interface_names)
         if hasattr(self, "status"):
             self.update_status_display()
+
     def update_status_display(self):
         net = self.selected_interface.get()
         proto = self.protocol_mode.get()
@@ -584,19 +583,18 @@ class DNSGameOptimizer:
         )
         self.btn_ping_full.pack(side="left", padx=4, pady=8)
 
-        # دکمه درباره
-        self.btn_about = ctk.CTkButton(
+        self.btn_tab_settings = ctk.CTkButton(
             btn_row,
-            text=f"{RLM}درباره برنامه",
+            text=f"{RLM}تنظیمات",
             width=top_btn_width,
             height=top_btn_height,
             fg_color="#111111",
             hover_color="#374151",
             text_color="white",
             font=self.font_normal,
-            command=self.open_about_window,
+            command=lambda: self.on_top_tab_change("settings"),
         )
-        self.btn_about.pack(side="left", padx=4, pady=8)
+        self.btn_tab_settings.pack(side="left", padx=4, pady=8)
 
         content = ctk.CTkFrame(main, fg_color=self.dark)
         content.grid(row=2, column=0, sticky="nsew", padx=10, pady=8)
@@ -605,9 +603,14 @@ class DNSGameOptimizer:
 
         self.tab_dns_root = ctk.CTkFrame(content, fg_color=self.dark)
         self.tab_games_root = ctk.CTkFrame(content, fg_color=self.dark)
+        self.tab_settings_root = ctk.CTkFrame(content, fg_color=self.dark)
+
         self.tab_dns_root.grid(row=0, column=0, sticky="nsew")
         self.tab_games_root.grid(row=0, column=0, sticky="nsew")
+        self.tab_settings_root.grid(row=0, column=0, sticky="nsew")
+
         self.tab_games_root.grid_remove()
+        self.tab_settings_root.grid_remove()
 
         # تب DNS
         dns_root = ctk.CTkFrame(self.tab_dns_root, fg_color=self.dark)
@@ -668,9 +671,221 @@ class DNSGameOptimizer:
         )
         self.frame_games.pack(fill="both", expand=True, padx=10, pady=6)
 
-        # نوار پایین
-        self.bottom_settings = self.build_bottom_settings()
-        self.bottom_settings.grid(row=1, column=0, sticky="ew", padx=10, pady=(0, 4))
+        # تب تنظیمات: ردیف ۱ سه کارت، ردیف ۲ توضیحات
+        settings_root = ctk.CTkFrame(self.tab_settings_root, fg_color=self.dark)
+        settings_root.pack(fill="both", expand=True, padx=10, pady=10)
+
+        settings_root.grid_rowconfigure(0, weight=0, minsize=150)
+        settings_root.grid_rowconfigure(1, weight=0)
+        for c in range(3):
+            settings_root.grid_columnconfigure(c, weight=1, uniform="settings_cols")
+
+        card_width = 280
+
+        # ردیف ۱ - ستون ۰: کارت شبکه
+        netcard = ctk.CTkFrame(settings_root, fg_color=self.card, corner_radius=12)
+        netcard.grid(row=0, column=0, padx=(0, 4), pady=(0, 4), sticky="nsew")
+        netcard.grid_rowconfigure(1, weight=1)
+        netcard.grid_columnconfigure(0, weight=1)
+        netcard.grid_columnconfigure(1, weight=1)
+        netcard.configure(width=card_width)
+
+        self.netlabel = ctk.CTkLabel(
+            netcard,
+            text=f"{RLM}{TXT['netcard_title']}",
+            font=self.font_header,
+            text_color=self.green,
+            anchor="center",
+            justify="center",
+        )
+        self.netlabel.grid(
+            row=0, column=0, columnspan=2, sticky="ew", padx=8, pady=(8, 4)
+        )
+
+        self.btn_refresh_if = ctk.CTkButton(
+            netcard,
+            text=f"{RLM}{TXT['btn_refresh']}",
+            fg_color=self.blue,
+            hover_color="#2563eb",
+            text_color="white",
+            font=self.font_normal,
+            height=32,
+            width=110,
+            command=self.refresh_interfaces,
+        )
+        self.btn_refresh_if.grid(
+            row=1, column=0, sticky="ew", padx=(8, 4), pady=(0, 8)
+        )
+
+        self.interface_menu = ctk.CTkOptionMenu(
+            netcard,
+            variable=self.selected_interface,
+            values=self.interface_names,
+            fg_color=self.darker,
+            button_color=self.green,
+            button_hover_color="#23985d",
+            text_color="white",
+            font=self.font_normal,
+            height=32,
+            width=150,
+            command=self.on_interface_change,
+        )
+        self.interface_menu.grid(
+            row=1, column=1, sticky="ew", padx=(4, 8), pady=(0, 8)
+        )
+
+        # ردیف ۱ - ستون ۱: پروتکل
+        protocard = ctk.CTkFrame(settings_root, fg_color=self.card, corner_radius=12)
+        protocard.grid(row=0, column=1, padx=4, pady=(0, 4), sticky="nsew")
+        protocard.grid_rowconfigure(1, weight=1)
+        protocard.grid_columnconfigure(0, weight=1)
+        protocard.configure(width=card_width)
+
+        self.protolabel = ctk.CTkLabel(
+            protocard,
+            text=f"{RLM}{TXT['proto_title']}",
+            font=self.font_header,
+            text_color=self.green,
+            anchor="center",
+            justify="center",
+        )
+        self.protolabel.grid(row=0, column=0, sticky="ew", padx=8, pady=(8, 4))
+
+        self.protocol_menu = ctk.CTkOptionMenu(
+            protocard,
+            variable=self.protocol_mode,
+            values=["IPv4", "IPv6"],
+            fg_color=self.darker,
+            button_color=self.green,
+            button_hover_color="#23985d",
+            text_color="white",
+            font=self.font_normal,
+            width=140,
+            height=32,
+            command=self.on_protocol_change,
+        )
+        self.protocol_menu.grid(row=1, column=0, sticky="ew", padx=8, pady=(0, 8))
+
+        # ردیف ۱ - ستون ۲: ابزارهای سریع
+        toolscard = ctk.CTkFrame(settings_root, fg_color=self.card, corner_radius=12)
+        toolscard.grid(row=0, column=2, padx=(4, 0), pady=(0, 4), sticky="nsew")
+        toolscard.grid_rowconfigure(1, weight=1)
+        toolscard.grid_columnconfigure(0, weight=1)
+        toolscard.configure(width=card_width)
+
+        self.toolslabel = ctk.CTkLabel(
+            toolscard,
+            text=f"{RLM}{TXT['tools_title']}",
+            font=self.font_header,
+            text_color=self.green,
+            anchor="center",
+            justify="center",
+        )
+        self.toolslabel.grid(row=0, column=0, sticky="ew", padx=8, pady=(8, 4))
+
+        btnframe = ctk.CTkFrame(toolscard, fg_color="transparent")
+        btnframe.grid(row=1, column=0, sticky="ew", pady=(0, 8), padx=8)
+        btnframe.grid_columnconfigure(0, weight=1)
+        btnframe.grid_columnconfigure(1, weight=1)
+
+        self.btn_flush = ctk.CTkButton(
+            btnframe,
+            text=f"{RLM}{TXT['btn_flush_dns']}",
+            fg_color="#3fb881",
+            hover_color="#2fa668",
+            text_color=self.darker,
+            font=self.font_normal,
+            height=32,
+            width=120,
+            command=self.flush_dns,
+        )
+        self.btn_flush.grid(row=0, column=0, sticky="ew", padx=3, pady=4)
+
+        self.btn_reset_net = ctk.CTkButton(
+            btnframe,
+            text=f"{RLM}{TXT['btn_reset_net']}",
+            fg_color="#f59e0b",
+            hover_color="#d97706",
+            text_color="white",
+            font=self.font_normal,
+            height=32,
+            width=120,
+            command=self.restart_network,
+        )
+        self.btn_reset_net.grid(row=0, column=1, sticky="ew", padx=3, pady=4)
+
+        # ردیف ۲: توضیحات برنامه
+        aboutcard = ctk.CTkFrame(settings_root, fg_color=self.card, corner_radius=12)
+        aboutcard.grid(row=1, column=0, columnspan=3, padx=0, pady=(0, 0), sticky="nsew")
+        aboutcard.grid_columnconfigure(0, weight=1)
+
+        ctk.CTkLabel(
+            aboutcard,
+            text=f"{RLM}{TXT['app_title']}",
+            text_color=self.green,
+            font=self.font_header,
+            anchor="center",
+            justify="center",
+        ).grid(row=0, column=0, padx=10, pady=(10, 4), sticky="ew")
+
+        ctk.CTkLabel(
+            aboutcard,
+            text=f"{RLM}نسخه: {APP_VERSION}",
+            text_color="#bbbbbb",
+            font=self.font_normal,
+            anchor="center",
+            justify="center",
+        ).grid(row=1, column=0, padx=10, pady=(0, 4), sticky="ew")
+
+        author_label = ctk.CTkLabel(
+            aboutcard,
+            text=f"{RLM}{APP_AUTHOR}",
+            text_color=self.blue,
+            font=self.font_normal,
+            anchor="center",
+            justify="center",
+        )
+        author_label.grid(row=2, column=0, padx=10, pady=(0, 2), sticky="ew")
+        try:
+            author_label.configure(cursor="hand2")
+        except Exception:
+            pass
+
+        def open_author(event=None):
+            if APP_AUTHOR_URL:
+                webbrowser.open(APP_AUTHOR_URL)
+
+        author_label.bind("<Button-1>", open_author)
+
+        github_label = ctk.CTkLabel(
+            aboutcard,
+            text=f"{RLM}لینک گیت هاب برنامه",
+            text_color=self.blue,
+            font=self.font_normal,
+            anchor="center",
+            justify="center",
+        )
+        github_label.grid(row=3, column=0, padx=10, pady=(2, 4), sticky="ew")
+        try:
+            github_label.configure(cursor="hand2")
+        except Exception:
+            pass
+
+        def open_github(event=None):
+            if APP_GITHUB:
+                webbrowser.open(APP_GITHUB)
+
+        github_label.bind("<Button-1>", open_github)
+
+        ctk.CTkLabel(
+            aboutcard,
+            text=f"{RLM}{APP_DESC}",
+            text_color="#dddddd",
+            font=self.font_normal,
+            anchor="center",
+            justify="center",
+            wraplength=620,
+        ).grid(row=4, column=0, padx=10, pady=(4, 10), sticky="ew")
 
         self.current_dns_category = "local"
         self.build_dns_list()
@@ -690,152 +905,29 @@ class DNSGameOptimizer:
 
         self.on_top_tab_change("dns")
 
-    def build_bottom_settings(self):
-        frame = ctk.CTkFrame(self.root, fg_color=self.dark, height=120)
-        frame.grid_propagate(False)
-        for i in range(3):
-            frame.grid_columnconfigure(i, weight=1)
-
-        # ابزارهای سریع
-        toolscard = ctk.CTkFrame(frame, fg_color=self.card, corner_radius=12)
-        toolscard.grid(row=0, column=0, sticky="nsew", padx=4, pady=4)
-        toolscard.grid_rowconfigure(1, weight=1)
-        toolscard.grid_columnconfigure(0, weight=1)
-
-        self.toolslabel = ctk.CTkLabel(
-            toolscard,
-            text=f"{RLM}{TXT['tools_title']}",
-            font=self.font_header,
-            text_color=self.green,
-            anchor="center",
-            justify="center",
-        )
-        self.toolslabel.grid(row=0, column=0, sticky="ew", padx=10, pady=(10, 4))
-
-        btnframe = ctk.CTkFrame(toolscard, fg_color="transparent")
-        btnframe.grid(row=1, column=0, sticky="ew", pady=(6, 10), padx=10)
-        btnframe.grid_columnconfigure(0, weight=1)
-        btnframe.grid_columnconfigure(1, weight=1)
-
-        self.btn_flush = ctk.CTkButton(
-            btnframe,
-            text=f"{RLM}{TXT['btn_flush_dns']}",
-            fg_color="#3fb881",
-            hover_color="#2fa668",
-            text_color=self.darker,
-            font=self.font_normal,
-            height=32,
-            command=self.flush_dns,
-        )
-        self.btn_flush.grid(row=0, column=0, sticky="ew", padx=4, pady=4)
-
-        self.btn_reset_net = ctk.CTkButton(
-            btnframe,
-            text=f"{RLM}{TXT['btn_reset_net']}",
-            fg_color="#f59e0b",
-            hover_color="#d97706",
-            text_color="white",
-            font=self.font_normal,
-            height=32,
-            command=self.restart_network,
-        )
-        self.btn_reset_net.grid(row=0, column=1, sticky="ew", padx=4, pady=4)
-
-        # پروتکل
-        protocard = ctk.CTkFrame(frame, fg_color=self.card, corner_radius=12)
-        protocard.grid(row=0, column=1, sticky="nsew", padx=4, pady=4)
-        protocard.grid_rowconfigure(1, weight=1)
-        protocard.grid_columnconfigure(0, weight=1)
-
-        self.protolabel = ctk.CTkLabel(
-            protocard,
-            text=f"{RLM}{TXT['proto_title']}",
-            font=self.font_header,
-            text_color=self.green,
-            anchor="center",
-            justify="center",
-        )
-        self.protolabel.grid(row=0, column=0, sticky="ew", padx=10, pady=(10, 4))
-
-        self.protocol_menu = ctk.CTkOptionMenu(
-            protocard,
-            variable=self.protocol_mode,
-            values=["IPv4", "IPv6"],
-            fg_color=self.darker,
-            button_color=self.green,
-            button_hover_color="#23985d",
-            text_color="white",
-            font=self.font_normal,
-            width=140,
-            height=32,
-            command=self.on_protocol_change,
-        )
-        self.protocol_menu.grid(row=1, column=0, sticky="ew", padx=10, pady=(0, 10))
-
-        # کارت شبکه
-        netcard = ctk.CTkFrame(frame, fg_color=self.card, corner_radius=12)
-        netcard.grid(row=0, column=2, sticky="nsew", padx=4, pady=4)
-        netcard.grid_rowconfigure(1, weight=1)
-        netcard.grid_columnconfigure(0, weight=1)
-        netcard.grid_columnconfigure(1, weight=1)
-
-        self.netlabel = ctk.CTkLabel(
-            netcard,
-            text=f"{RLM}{TXT['netcard_title']}",
-            font=self.font_header,
-            text_color=self.green,
-            anchor="center",
-            justify="center",
-        )
-        self.netlabel.grid(
-            row=0, column=0, columnspan=2, sticky="ew", padx=10, pady=(10, 4)
-        )
-
-        self.btn_refresh_if = ctk.CTkButton(
-            netcard,
-            text=f"{RLM}{TXT['btn_refresh']}",
-            fg_color=self.blue,
-            hover_color="#2563eb",
-            text_color="white",
-            font=self.font_normal,
-            height=32,
-            command=self.refresh_interfaces,
-        )
-        self.btn_refresh_if.grid(
-            row=1, column=0, sticky="ew", padx=(10, 4), pady=(0, 10)
-        )
-
-        self.interface_menu = ctk.CTkOptionMenu(
-            netcard,
-            variable=self.selected_interface,
-            values=self.interface_names,
-            fg_color=self.darker,
-            button_color=self.green,
-            button_hover_color="#23985d",
-            text_color="white",
-            font=self.font_normal,
-            height=32,
-            command=self.on_interface_change,
-        )
-        self.interface_menu.grid(
-            row=1, column=1, sticky="ew", padx=(4, 10), pady=(0, 10)
-        )
-
-        return frame
-
-    # ---------- تب‌ها و لیست ----------
+    # ---------- سوییچ بین سه تب ----------
     def on_top_tab_change(self, which):
+        self.tab_dns_root.grid_remove()
+        self.tab_games_root.grid_remove()
+        self.tab_settings_root.grid_remove()
+
+        self.btn_tab_dns.configure(fg_color="#111111", text_color="white")
+        self.btn_tab_games.configure(fg_color="#111111", text_color="white")
+        self.btn_tab_settings.configure(fg_color="#111111", text_color="white")
+
         if which == "dns":
-            self.tab_games_root.grid_remove()
             self.tab_dns_root.grid()
             self.btn_tab_dns.configure(fg_color=self.green, text_color=self.darker)
-            self.btn_tab_games.configure(fg_color="#111111", text_color="white")
-        else:
-            self.tab_dns_root.grid_remove()
+        elif which == "games":
             self.tab_games_root.grid()
             self.btn_tab_games.configure(fg_color=self.green, text_color=self.darker)
-            self.btn_tab_dns.configure(fg_color="#111111", text_color="white")
+        else:
+            self.tab_settings_root.grid()
+            self.btn_tab_settings.configure(
+                fg_color=self.green, text_color=self.darker
+            )
 
+    # ---------- DNS ----------
     def set_dns_category(self, cat):
         self.current_dns_category = cat
         if cat == "local":
@@ -1036,7 +1128,6 @@ class DNSGameOptimizer:
             n = name.get().strip()
             i1 = ip1.get().strip()
             i2 = ip2.get().strip()
-
             if not n or not i1:
                 messagebox.showwarning(TXT["msg_warning"], TXT["warn_required"])
                 return
@@ -1305,7 +1396,6 @@ class DNSGameOptimizer:
             )
 
         threading.Thread(target=worker, daemon=True).start()
-
     # ---------- پینگ همه DNS ----------
     def ping_all_dns(self):
         all_ips = [(n, i[0]) for c in self.dns_data.values() for n, i in c.items()]
