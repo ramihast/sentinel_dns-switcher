@@ -677,18 +677,16 @@ class DNSGameOptimizer:
 
         settings_root.grid_rowconfigure(0, weight=0, minsize=150)
         settings_root.grid_rowconfigure(1, weight=0)
-        for c in range(3):
-            settings_root.grid_columnconfigure(c, weight=1, uniform="settings_cols")
+        settings_root.grid_columnconfigure(0, weight=3)
+        settings_root.grid_columnconfigure(1, weight=1)
+        settings_root.grid_columnconfigure(2, weight=2)
 
-        card_width = 280
-
-        # ردیف ۱ - ستون ۰: کارت شبکه
+        # ردیف ۱ - ستون ۰: کارت شبکه (بزرگ)
         netcard = ctk.CTkFrame(settings_root, fg_color=self.card, corner_radius=12)
         netcard.grid(row=0, column=0, padx=(0, 4), pady=(0, 4), sticky="nsew")
         netcard.grid_rowconfigure(1, weight=1)
         netcard.grid_columnconfigure(0, weight=1)
         netcard.grid_columnconfigure(1, weight=1)
-        netcard.configure(width=card_width)
 
         self.netlabel = ctk.CTkLabel(
             netcard,
@@ -710,7 +708,6 @@ class DNSGameOptimizer:
             text_color="white",
             font=self.font_normal,
             height=32,
-            width=110,
             command=self.refresh_interfaces,
         )
         self.btn_refresh_if.grid(
@@ -727,19 +724,17 @@ class DNSGameOptimizer:
             text_color="white",
             font=self.font_normal,
             height=32,
-            width=150,
             command=self.on_interface_change,
         )
         self.interface_menu.grid(
             row=1, column=1, sticky="ew", padx=(4, 8), pady=(0, 8)
         )
 
-        # ردیف ۱ - ستون ۱: پروتکل
+        # ردیف ۱ - ستون ۱: پروتکل (نصف عرض)
         protocard = ctk.CTkFrame(settings_root, fg_color=self.card, corner_radius=12)
         protocard.grid(row=0, column=1, padx=4, pady=(0, 4), sticky="nsew")
         protocard.grid_rowconfigure(1, weight=1)
         protocard.grid_columnconfigure(0, weight=1)
-        protocard.configure(width=card_width)
 
         self.protolabel = ctk.CTkLabel(
             protocard,
@@ -760,7 +755,6 @@ class DNSGameOptimizer:
             button_hover_color="#23985d",
             text_color="white",
             font=self.font_normal,
-            width=140,
             height=32,
             command=self.on_protocol_change,
         )
@@ -771,7 +765,6 @@ class DNSGameOptimizer:
         toolscard.grid(row=0, column=2, padx=(4, 0), pady=(0, 4), sticky="nsew")
         toolscard.grid_rowconfigure(1, weight=1)
         toolscard.grid_columnconfigure(0, weight=1)
-        toolscard.configure(width=card_width)
 
         self.toolslabel = ctk.CTkLabel(
             toolscard,
@@ -796,7 +789,6 @@ class DNSGameOptimizer:
             text_color=self.darker,
             font=self.font_normal,
             height=32,
-            width=120,
             command=self.flush_dns,
         )
         self.btn_flush.grid(row=0, column=0, sticky="ew", padx=3, pady=4)
@@ -809,12 +801,11 @@ class DNSGameOptimizer:
             text_color="white",
             font=self.font_normal,
             height=32,
-            width=120,
             command=self.restart_network,
         )
         self.btn_reset_net.grid(row=0, column=1, sticky="ew", padx=3, pady=4)
 
-        # ردیف ۲: توضیحات برنامه
+        # ردیف ۲: توضیحات برنامه (APP_DESC یک‌خطی)
         aboutcard = ctk.CTkFrame(settings_root, fg_color=self.card, corner_radius=12)
         aboutcard.grid(row=1, column=0, columnspan=3, padx=0, pady=(0, 0), sticky="nsew")
         aboutcard.grid_columnconfigure(0, weight=1)
@@ -884,7 +875,6 @@ class DNSGameOptimizer:
             font=self.font_normal,
             anchor="center",
             justify="center",
-            wraplength=620,
         ).grid(row=4, column=0, padx=10, pady=(4, 10), sticky="ew")
 
         self.current_dns_category = "local"
@@ -1184,7 +1174,7 @@ class DNSGameOptimizer:
 
         ctk.CTkLabel(
             w,
-            text=f"{RLM}{TXT['dns_name']}",
+            text=f"{RLM}{TXT["dns_name"]}",
             text_color=self.green,
             font=self.font_normal,
             anchor="center",
@@ -1198,7 +1188,7 @@ class DNSGameOptimizer:
 
         ctk.CTkLabel(
             w,
-            text=f"{RLM}{TXT['dns_ip_main']}",
+            text=f"{RLM}{TXT["dns_ip_main"]}",
             text_color=self.green,
             font=self.font_normal,
             anchor="center",
@@ -1213,7 +1203,7 @@ class DNSGameOptimizer:
 
         ctk.CTkLabel(
             w,
-            text=f"{RLM}{TXT['dns_ip_second']}",
+            text=f"{RLM}{TXT["dns_ip_second"]}",
             text_color=self.green,
             font=self.font_normal,
             anchor="center",
@@ -1258,7 +1248,7 @@ class DNSGameOptimizer:
             save_json_safe(DNS_FILE, self.dns_data)
             self.build_dns_list()
             self.status.configure(
-                text=f"{RLM}{new_name} {TXT['status_dns_edited']}",
+                text=f"{RLM}{new_name} {TXT["status_dns_edited"]}",
                 text_color=self.green,
                 anchor="center",
                 justify="center",
@@ -1267,7 +1257,7 @@ class DNSGameOptimizer:
 
         ctk.CTkButton(
             w,
-            text=f"{RLM}{TXT['btn_save']}",
+            text=f"{RLM}{TXT["btn_save"]}",
             fg_color=self.green,
             width=200,
             height=36,
@@ -1290,7 +1280,7 @@ class DNSGameOptimizer:
                 save_json_safe(DNS_FILE, self.dns_data)
                 self.build_dns_list()
                 self.status.configure(
-                    text=f"{RLM}{dns_name} {TXT['status_dns_deleted']}",
+                    text=f"{RLM}{dns_name} {TXT["status_dns_deleted"]}",
                     text_color="#ff5555",
                     anchor="center",
                     justify="center",
@@ -1396,6 +1386,7 @@ class DNSGameOptimizer:
             )
 
         threading.Thread(target=worker, daemon=True).start()
+
     # ---------- پینگ همه DNS ----------
     def ping_all_dns(self):
         all_ips = [(n, i[0]) for c in self.dns_data.values() for n, i in c.items()]
@@ -1443,7 +1434,7 @@ class DNSGameOptimizer:
         self.root.after(
             0,
             lambda: self.status.configure(
-                text=f"{RLM}{TXT['status_ready']}",
+                text=f"{RLM}{TXT["status_ready"]}",
                 text_color=self.green,
                 anchor="center",
                 justify="center",
@@ -1456,7 +1447,6 @@ class DNSGameOptimizer:
         if not all_ips:
             messagebox.showinfo(TXT["full_test_title_info"], TXT["full_test_no_dns"])
             return
-
         self.full_test_cancel = False
         win = ctk.CTkToplevel(self.root)
         self.set_window_icon(win)
@@ -1469,7 +1459,7 @@ class DNSGameOptimizer:
         top.pack(fill="x", padx=10, pady=(10, 0))
         ctk.CTkLabel(
             top,
-            text=f"{RLM}{TXT['full_test_header']}",
+            text=f"{RLM}{TXT["full_test_header"]}",
             font=self.font_header,
             text_color=self.green,
             anchor="center",
@@ -1477,7 +1467,7 @@ class DNSGameOptimizer:
         ).pack()
         ctk.CTkLabel(
             top,
-            text=f"{RLM}{TXT['full_test_sub'].format(count=len(all_ips))}",
+            text=f"{RLM}{TXT["full_test_sub"].format(count=len(all_ips))}",
             font=self.font_normal,
             text_color="#bbbbbb",
             anchor="center",
@@ -1491,7 +1481,7 @@ class DNSGameOptimizer:
         self.full_prog.set(0)
         self.full_status_label = ctk.CTkLabel(
             progframe,
-            text=f"{RLM}{TXT['status_ready']}",
+            text=f"{RLM}{TXT["status_ready"]}",
             font=self.font_normal,
             text_color=self.green,
             anchor="center",
@@ -1516,7 +1506,7 @@ class DNSGameOptimizer:
 
         btn_cancel = ctk.CTkButton(
             bottom,
-            text=f"{RLM}{TXT['full_cancel']}",
+            text=f"{RLM}{TXT["full_cancel"]}",
             fg_color="#ef4444",
             hover_color="#b91c1c",
             text_color="white",
@@ -1529,7 +1519,7 @@ class DNSGameOptimizer:
 
         btn_start = ctk.CTkButton(
             bottom,
-            text=f"{RLM}{TXT['btn_ping_full']}",
+            text=f"{RLM}{TXT["btn_ping_full"]}",
             fg_color=self.blue,
             hover_color="#2563eb",
             text_color="white",
@@ -1544,7 +1534,7 @@ class DNSGameOptimizer:
 
         btn_close = ctk.CTkButton(
             bottom,
-            text=f"{RLM}{TXT['text_win_close']}",
+            text=f"{RLM}{TXT["text_win_close"]}",
             fg_color=self.green,
             hover_color="#23985d",
             text_color=self.darker,
@@ -1574,7 +1564,7 @@ class DNSGameOptimizer:
             def update_status(i=idx, name=n):
                 if hasattr(self, "full_status_label"):
                     self.full_status_label.configure(
-                        text=f"{RLM}{TXT['status_full_test'].format(i=i, total=total, name=name)}",
+                        text=f"{RLM}{TXT["status_full_test"].format(i=i, total=total, name=name)}",
                         text_color=self.green,
                         anchor="center",
                         justify="center",
@@ -1637,13 +1627,13 @@ class DNSGameOptimizer:
                     )
                 else:
                     self.full_status_label.configure(
-                        text=f"{RLM}{TXT['status_full_test_done']}",
+                        text=f"{RLM}{TXT["status_full_test_done"]}",
                         text_color=self.green,
                         anchor="center",
                         justify="center",
                     )
                     self.status.configure(
-                        text=f"{RLM}{TXT['status_full_test_done']}",
+                        text=f"{RLM}{TXT["status_full_test_done"]}",
                         text_color=self.green,
                         anchor="center",
                         justify="center",
@@ -1701,7 +1691,7 @@ class DNSGameOptimizer:
 
         ctk.CTkButton(
             win,
-            text=f"{RLM}{TXT['text_win_close']}",
+            text=f"{RLM}{TXT["text_win_close"]}",
             fg_color=self.green,
             hover_color="#23985d",
             text_color=self.darker,
@@ -1713,90 +1703,83 @@ class DNSGameOptimizer:
 
     # ---------- درباره ----------
     def open_about_window(self):
-       w = ctk.CTkToplevel(self.root)
-       self.set_window_icon(w)
-       w.title("درباره برنامه")
-       w.geometry("420x300")
-       w.resizable(False, False)
-       w.configure(fg_color=self.dark)
-    
-       # عنوان
-       ctk.CTkLabel(
-           w,
-           text=f"{RLM}{TXT['app_title']}",
-           text_color=self.green,
-           font=self.font_title,
-           anchor="center",
-           justify="center",
-       ).pack(pady=(14, 4))
-    
-       # نسخه
-       ctk.CTkLabel(
-           w,
-           text=f"{RLM} APP VERSION {APP_VERSION}",
-           text_color="#bbbbbb",
-           font=self.font_normal,
-           anchor="center",
-           justify="center",
-       ).pack(pady=(0, 4))
-    
-       # --- سازنده (لینک‌دار) ---
-       author_label = ctk.CTkLabel(
-           w,
-           text=f"{RLM} {APP_AUTHOR}",
-           text_color=self.blue,
-           font=self.font_normal,
-           anchor="center",
-           justify="center",
-       )
-       author_label.pack(pady=(0, 2))
-    
-       try:
-           author_label.configure(cursor="hand2")
-       except Exception:
-           pass
-    
-       def open_author(event=None):
-           if APP_AUTHOR_URL:
-               webbrowser.open(APP_AUTHOR_URL)
-    
-       author_label.bind("<Button-1>", open_author)
-    
-       # --- گیت هاب برنامه (زیر سازنده، لینک‌دار) ---
-       github_label = ctk.CTkLabel(
-           w,
-           text=f"{RLM}گیت هاب برنامه",
-           text_color=self.blue,
-           font=self.font_normal,
-           anchor="center",
-           justify="center",
-       )
-       github_label.pack(pady=(2, 6))
-    
-       try:
-           github_label.configure(cursor="hand2")
-       except Exception:
-           pass
-    
-       def open_github(event=None):
-           if APP_GITHUB:
-               webbrowser.open(APP_GITHUB)
-    
-       github_label.bind("<Button-1>", open_github)
-    
-       # توضیح
-       ctk.CTkLabel(
-           w,
-           text=f"{RLM}{APP_DESC}",
-           text_color="#dddddd",
-           font=self.font_normal,
-           anchor="center",
-           justify="center",
-           wraplength=380,
-       ).pack(pady=(4, 10))
-    
-       
-    
+        w = ctk.CTkToplevel(self.root)
+        self.set_window_icon(w)
+        w.title("درباره برنامه")
+        w.geometry("420x300")
+        w.resizable(False, False)
+        w.configure(fg_color=self.dark)
+
+        ctk.CTkLabel(
+            w,
+            text=f"{RLM}{TXT["app_title"]}",
+            text_color=self.green,
+            font=self.font_title,
+            anchor="center",
+            justify="center",
+        ).pack(pady=(14, 4))
+
+        ctk.CTkLabel(
+            w,
+            text=f"{RLM} APP VERSION {APP_VERSION}",
+            text_color="#bbbbbb",
+            font=self.font_normal,
+            anchor="center",
+            justify="center",
+        ).pack(pady=(0, 4))
+
+        author_label = ctk.CTkLabel(
+            w,
+            text=f"{RLM} {APP_AUTHOR}",
+            text_color=self.blue,
+            font=self.font_normal,
+            anchor="center",
+            justify="center",
+        )
+        author_label.pack(pady=(0, 2))
+
+        try:
+            author_label.configure(cursor="hand2")
+        except Exception:
+            pass
+
+        def open_author(event=None):
+            if APP_AUTHOR_URL:
+                webbrowser.open(APP_AUTHOR_URL)
+
+        author_label.bind("<Button-1>", open_author)
+
+        github_label = ctk.CTkLabel(
+            w,
+            text=f"{RLM}گیت هاب برنامه",
+            text_color=self.blue,
+            font=self.font_normal,
+            anchor="center",
+            justify="center",
+        )
+        github_label.pack(pady=(2, 6))
+
+        try:
+            github_label.configure(cursor="hand2")
+        except Exception:
+            pass
+
+        def open_github(event=None):
+            if APP_GITHUB:
+                webbrowser.open(APP_GITHUB)
+
+        github_label.bind("<Button-1>", open_github)
+
+        ctk.CTkLabel(
+            w,
+            text=f"{RLM}{APP_DESC}",
+            text_color="#dddddd",
+            font=self.font_normal,
+            anchor="center",
+            justify="center",
+            wraplength=380,
+        ).pack(pady=(4, 10))
+
     # ---------- DNS فعلی ----------
     def show_current_dns(self):
         try:
@@ -1930,7 +1913,7 @@ class DNSGameOptimizer:
         top.pack(fill="x", padx=10, pady=(10, 0))
         ctk.CTkLabel(
             top,
-            text=f"{RLM}{TXT['games_best_title']} - {game_label_text}",
+            text=f"{RLM}{TXT["games_best_title"]} - {game_label_text}",
             font=self.font_header,
             text_color=self.green,
             anchor="center",
@@ -1950,7 +1933,7 @@ class DNSGameOptimizer:
 
         statuslabel = ctk.CTkLabel(
             win,
-            text=f"{RLM}{TXT['status_ready']}",
+            text=f"{RLM}{TXT["status_ready"]}",
             font=self.font_normal,
             text_color=self.green,
             anchor="center",
@@ -2035,7 +2018,7 @@ class DNSGameOptimizer:
 
                 def update_status(i=idx, dn=dns_name):
                     statuslabel.configure(
-                        text=f"{RLM}{TXT['status_full_test'].format(i=i, total=total, name=dn)}",
+                        text=f"{RLM}{TXT["status_full_test"].format(i=i, total=total, name=dn)}",
                         text_color=self.green,
                         anchor="center",
                         justify="center",
@@ -2079,14 +2062,14 @@ class DNSGameOptimizer:
                 if best is not None:
                     name, ip, ap, jt, pl, scv = best
                     statuslabel.configure(
-                        text=f"{RLM}{TXT['games_best_dns']} {game_label_text}: {name} {ip} - {scv:.1f}",
+                        text=f"{RLM}{TXT["games_best_dns"]} {game_label_text}: {name} {ip} - {scv:.1f}",
                         text_color=self.green,
                         anchor="center",
                         justify="center",
                     )
                 else:
                     statuslabel.configure(
-                        text=f"{RLM}{TXT['games_best_not_found']}",
+                        text=f"{RLM}{TXT["games_best_not_found"]}",
                         text_color="#f97373",
                         anchor="center",
                         justify="center",
