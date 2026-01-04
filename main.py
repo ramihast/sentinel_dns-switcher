@@ -37,7 +37,7 @@ if getattr(sys, "frozen", False):
 else:
     base_path = os.path.dirname(os.path.abspath(__file__))
 
-font_path = os.path.join(base_path, "assets", "Dana-Regular.ttf")
+font_path = os.path.join(base_path, "assets", "ModamFaNum-Black.ttf")
 icon_path = os.path.join(base_path, "assets", "icon.ico")
 DNS_FILE = os.path.join(base_path, "dns_list.json")
 GAMES_FILE = os.path.join(base_path, "games_list.json")
@@ -323,9 +323,11 @@ class DNSGameOptimizer:
         self.card = "#2a2f2a"
         self.blue = "#3b82f6"
 
-        self.font_title = ctk.CTkFont(family="Dana", size=22, weight="bold")
-        self.font_header = ctk.CTkFont(family="Dana", size=14, weight="bold")
-        self.font_normal = ctk.CTkFont(family="Dana", size=12, weight="bold")
+        self.font_title = ctk.CTkFont(family="ModamFaNum Black", size=22, weight="bold")
+        self.font_header = ctk.CTkFont(family="ModamFaNum Black", size=14, weight="bold")
+        self.font_normal = ctk.CTkFont(family="ModamFaNum Black", size=12, weight="bold")
+
+
 
         self.dns_data = load_json_safe(DNS_FILE, DEFAULT_DNS)
         self.games_data = load_json_safe(GAMES_FILE, DEFAULT_GAMES)
@@ -963,7 +965,7 @@ class DNSGameOptimizer:
                 card,
                 text=ip_text,
                 text_color="#cccccc",
-                font=ctk.CTkFont(family="Dana", size=11, weight="bold"),
+                font=ctk.CTkFont(family="ModamFaNum Black", size=11, weight="bold"),
                 anchor="center",
                 justify="center",
             ).pack(pady=(0, 4), padx=4)
