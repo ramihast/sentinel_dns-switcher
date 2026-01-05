@@ -6,6 +6,7 @@ import math
 import webbrowser  # برای باز کردن لینک‌ها
 
 # برای مخفی کردن پنجره‌های CMD در ویندوز
+
 if os.name == "nt":
     CREATE_NO_WINDOW = subprocess.CREATE_NO_WINDOW
 else:
@@ -13,6 +14,7 @@ else:
 
 
 # ---------- اجرای خودکار به‌صورت ادمین ----------
+
 def is_admin():
     try:
         return ctypes.windll.shell32.IsUserAnAdmin()
@@ -32,6 +34,7 @@ def run_as_admin():
 run_as_admin()
 
 # ---------- مسیر پایه ----------
+
 if getattr(sys, "frozen", False):
     base_path = os.path.dirname(sys.executable)
 else:
@@ -43,6 +46,7 @@ DNS_FILE = os.path.join(base_path, "dns_list.json")
 GAMES_FILE = os.path.join(base_path, "games_list.json")
 
 # --- اطلاعات نسخه / سازنده / گیت‌هاب ---
+
 APP_VERSION = "1.0.0 (Early Access)"
 APP_AUTHOR = "aliMousavi"
 APP_AUTHOR_URL = "https://raminetcv.ir/"
@@ -357,6 +361,7 @@ class DNSGameOptimizer:
                 pass
 
     # ---------- اینترفیس شبکه ----------
+
     def get_all_interfaces(self):
         interfaces = []
         try:
@@ -472,6 +477,7 @@ class DNSGameOptimizer:
         )
 
     # ---------- UI اصلی ----------
+
     def setup_ui(self):
         main = ctk.CTkFrame(self.root, fg_color=self.dark)
         main.grid(row=0, column=0, sticky="nsew")
