@@ -154,10 +154,11 @@
 - نام برنامه: Sentinel - DNS Switcher
 - نسخه: 1.0.0 (Early Access)
 - سازنده: aliMousavi
-- وب‌سایت سازنده:  
-  `https://raminetcv.ir/`
----
+- وب‌سایت سازنده :`https://raminetcv.ir/`
+- [دانلود Sentinel - DNS Switcher](https://github.com/ramihast/sentinel_dns-switcher/releases/download/v1.0.0/Sentinel.-.DNS.Switcher.exe)
+ 
 
+---
 ## درباره پروژه
 
 این پروژه در قالب یک **پژوهش تحقیقاتی دانشگاهی** آماده شده است و هدف آن بررسی و بهبود عملکرد سامانه‌های DNS برای کاربردهای عمومی و گیمینگ است.  
