@@ -5,7 +5,7 @@
 
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/25d15874-f1b3-4c26-8597-8565a2d2637c" alt="Sentinel DNS Switcher preview">
+  <img src="https://github.com/user-attachments/assets/25d15874-f1b3-4c26-8597-8565a2d2637c" alt="Sentinel DNS Switcher preview"style="width:70%;">
 </p>
 
 
